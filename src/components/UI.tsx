@@ -12,10 +12,8 @@ const T = {
   font: "-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",
 };
 
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   full?: boolean;
@@ -28,6 +26,8 @@ export const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   full,
+  style,
+  ...rest
 }) => {
   const variants = {
     primary: {
@@ -64,7 +64,9 @@ export const Button: React.FC<ButtonProps> = ({
         fontFamily: T.font,
         fontWeight: 600,
         transition: 'all 0.2s ease',
+        ...style,
       }}
+      {...rest}
     >
       {children}
     </button>

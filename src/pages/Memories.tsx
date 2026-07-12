@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { Card, Button, Modal, Divider } from '../components/UI';
 import { Memory, Mood } from '../types';
@@ -84,6 +84,11 @@ export const MemoriesPage: React.FC<MemoriesPageProps> = ({ onCreateClick }) => 
             size="sm"
             variant={filterMood === mood ? 'primary' : 'ghost'}
             onClick={() => setFilterMood(mood)}
+            style={{
+              background:
+                filterMood === mood ? MOOD_COLORS[mood] : 'transparent',
+              color: filterMood === mood ? T.surface : MOOD_COLORS[mood],
+            }}
           >
             {mood}
           </Button>

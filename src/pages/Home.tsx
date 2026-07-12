@@ -127,7 +127,7 @@ export const HomePage: React.FC<HomeProps> = ({ onNavigate }) => {
             gap: 8,
           }}
         >
-          <Pray size={28} color={T.sage} />
+          <Heart size={28} color={T.sage} />
           <span style={{ fontSize: 12, fontWeight: 600 }}>Prière</span>
         </Card>
       </div>
@@ -137,6 +137,12 @@ export const HomePage: React.FC<HomeProps> = ({ onNavigate }) => {
         <Button
           full
           onClick={() => onNavigate('jeux')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+          }}
         >
           <Gamepad2 size={16} />
           Jeu aléatoire
@@ -148,6 +154,12 @@ export const HomePage: React.FC<HomeProps> = ({ onNavigate }) => {
         full
         onClick={() => onNavigate('souvenirs')}
         variant="secondary"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+        }}
       >
         <Plus size={16} />
         Créer un souvenir
