@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Home, Image, Gamepad2, Gift, Pray, Plus } from 'lucide-react';
+import React from 'react';
+import { Image, Gamepad2, Gift, Heart, Plus } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { useGameStore } from '../stores/gameStore';
 import { Card, Button } from '../components/UI';
@@ -137,12 +137,6 @@ export const HomePage: React.FC<HomeProps> = ({ onNavigate }) => {
         <Button
           full
           onClick={() => onNavigate('jeux')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-          }}
         >
           <Gamepad2 size={16} />
           Jeu aléatoire
@@ -154,12 +148,6 @@ export const HomePage: React.FC<HomeProps> = ({ onNavigate }) => {
         full
         onClick={() => onNavigate('souvenirs')}
         variant="secondary"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-        }}
       >
         <Plus size={16} />
         Créer un souvenir

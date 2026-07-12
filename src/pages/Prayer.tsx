@@ -74,7 +74,6 @@ export const PrayerPage: React.FC = () => {
         <Button
           full
           onClick={handlePrayTogether}
-          style={{ background: T.sage }}
         >
           Prier ensemble
         </Button>

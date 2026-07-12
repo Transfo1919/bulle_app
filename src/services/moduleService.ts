@@ -23,7 +23,7 @@ export async function toggleBucketItemComplete(item: BucketItem): Promise<Bucket
   };
 }
 
-export async function deleteBucketItem(id: string): Promise<void> {
+export async function deleteBucketItem(_id: string): Promise<void> {
   // Placeholder - would call Supabase
 }
 
@@ -56,7 +56,7 @@ export async function markPrayerAnswered(topic: PrayerTopic): Promise<PrayerTopi
   };
 }
 
-export async function deletePrayerTopic(id: string): Promise<void> {
+export async function deletePrayerTopic(_id: string): Promise<void> {
   // Placeholder - would call Supabase
 }
 
