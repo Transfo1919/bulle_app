@@ -1,20 +1,7 @@
 {
-<<<<<<< HEAD
   "name": "bulle-app",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "lucide-react": "^0.383.0",
-=======
-  "name": "vite-react",
-  "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -23,16 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
->>>>>>> 1922044f657a829a80aa5a98330b0e496a4f6827
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.24.0",
+    "lucide-react": "^0.383.0",
+    "zustand": "^4.5.0",
+    "supabase": "^1.0.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.1",
-=======
     "@eslint/js": "^9.9.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -43,7 +28,6 @@
     "globals": "^15.9.0",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
->>>>>>> 1922044f657a829a80aa5a98330b0e496a4f6827
     "vite": "^5.4.1"
   }
 }
