@@ -311,7 +311,7 @@ export default function Bulle() {
                       { key: "idees",   label: "Idées",   sub: `${idees.filter(i => !i.done).length} en attente` },
                       { key: "jeux",    label: "Jeux",    sub: "à deux, sans enjeu" },
                     ].map(({ key, label, sub }) => (
-                      <button key={key} onClick={() => setTab(key)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: `1px solid ${T.border}`, textAlign: "left", background: "none", border: "none", borderBottom: `1px solid ${T.border}`, cursor: "pointer" }}>
+                      <button key={key} onClick={() => setTab(key)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 0", borderBottom: `1px solid ${T.border}`, textAlign: "left", background: "none", border: "none", cursor: "pointer" }}>
                         <div>
                           <div style={{ fontSize: 16, fontWeight: 600, color: T.ink, fontFamily: T.fontDisp, marginBottom: 2 }}>{label}</div>
                           <div style={{ fontSize: 13, color: T.muted }}>{sub}</div>
