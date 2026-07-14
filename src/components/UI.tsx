@@ -1,16 +1,5 @@
 import React from 'react';
-
-const T = {
-  paper: '#F5F1EA',
-  paper2: '#EDE8DF',
-  surface: '#FFFFFF',
-  ink: '#2B2B2B',
-  muted: '#9A9692',
-  sage: '#7A9E8E',
-  border: '#E4DFD6',
-  radius: 14,
-  font: "-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",
-};
+import { T } from '../theme';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;

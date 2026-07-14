@@ -1,80 +1,50 @@
-:root {
-  --paper: #F5F1EA;
-  --paper2: #EDE8DF;
-  --surface: #FFFFFF;
-  --ink: #2B2B2B;
-  --muted: #9A9692;
-  --sage: #7A9E8E;
-  --border: #E4DFD6;
-  --radius: 14px;
-}
-
-* {
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-html,
-body,
-#root {
-  width: 100%;
+html, body, #root {
   height: 100%;
-  overflow: hidden;
+  width: 100%;
+}
+
+body,
+body[data-theme='papier'] {
+  --paper: #F7F3EC;
+  --paper2: #EDE8DF;
+  --surface: #FFFFFF;
+  --ink: #2E2B27;
+  --muted: #8A8377;
+  --border: #E4DED2;
+  --accent: #8FA895;
+}
+
+body[data-theme='sauge'] {
+  --paper: #EEF1EA;
+  --paper2: #E2E8DD;
+  --surface: #FFFFFF;
+  --ink: #28312B;
+  --muted: #6E8F72;
+  --border: #DCE3D8;
+  --accent: #6E8F72;
+}
+
+body[data-theme='nuit'] {
+  --paper: #1C1B19;
+  --paper2: #26241F;
+  --surface: #26241F;
+  --ink: #EDEAE3;
+  --muted: #948C7C;
+  --border: #3A372F;
+  --accent: #8FA895;
 }
 
 body {
-  background-color: var(--paper);
+  background: var(--paper);
   color: var(--ink);
   font-family: -apple-system, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
-}
-
-button {
-  font-family: inherit;
-}
-
-input,
-textarea {
-  font-family: inherit;
-  color: var(--ink);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--muted);
-}
-
-input:focus,
-textarea:focus {
-  outline: none;
-}
-
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  transition: background 0.25s ease-out, color 0.25s ease-out;
 }

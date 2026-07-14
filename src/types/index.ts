@@ -8,7 +8,10 @@ export interface Memory {
   mood: Mood;
   location?: string;
   collection_id?: string;
+  favorite?: boolean;
   source: 'manual' | 'game' | 'bucket' | 'prayer';
+  source_id?: string;
+  photo_url?: string;
   photos?: Photo[];
   created_at: string;
   updated_at: string;
@@ -56,6 +59,7 @@ export interface GameSession {
 export interface BucketItem {
   id: string;
   title: string;
+  timing: 'ce_soir' | 'plus_tard';
   completed: boolean;
   completed_at?: string;
   created_at: string;
@@ -66,6 +70,7 @@ export interface PrayerTopic {
   title: string;
   description?: string;
   type: 'ponctuel' | 'récurrent';
+  category: 'toport' | 'recognition';
   status: 'active' | 'answered';
   created_at: string;
   answered_at?: string;

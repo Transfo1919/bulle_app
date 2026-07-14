@@ -1,33 +1,82 @@
 import { create } from 'zustand';
 import { PrayerTopic } from '../types';
+import { getPrayerTopics, createPrayerTopic, markPrayerAnswered, deletePrayerTopic } from '../services/moduleService';
 
 interface PrayerStore {
-  toPortTopics: PrayerTopic[];
-  recognitionTopics: PrayerTopic[];
-  setToPortTopics: (topics: PrayerTopic[]) => void;
-  setRecognitionTopics: (topics: PrayerTopic[]) => void;
-  addToPortTopic: (topic: PrayerTopic) => void;
-  addRecognitionTopic: (topic: PrayerTopic) => void;
-  markAnswered: (id: string) => void;
-  deleteTopic: (id: string, category: 'toport' | 'recognition') => void;
+  topics: PrayerTopic[];
+  loading: boolean;
+  error: string | null;
+  loadTopics: () => Promise<void>;
+  setTopics: (topics: PrayerTopic[]) => void;
+  addToPortTopic: (title: string) => Promise<void>;
+  addRecognitionTopic: (title: string) => Promise<void>;
+  markAnswered: (id: string) => Promise<void>;
+  deleteTopic: (id: string) => Promise<void>;
 }
 
-export const usePrayerStore = create<PrayerStore>((set) => ({
-  toPortTopics: [],
-  recognitionTopics: [],
-  setToPortTopics: (topics) => set({ toPortTopics: topics }),
-  setRecognitionTopics: (topics) => set({ recognitionTopics: topics }),
-  addToPortTopic: (topic) => set((state) => ({ toPortTopics: [...state.toPortTopics, topic] })),
-  addRecognitionTopic: (topic) => set((state) => ({ recognitionTopics: [...state.recognitionTopics, topic] })),
-  markAnswered: (id) =>
+export const usePrayerStore = create<PrayerStore>((set, get) => ({
+  topics: [],
+  loading: false,
+  error: null,
+
+  loadTopics: async () => {
+    set({ loading: true, error: null });
+    try {
+      const topics = await getPrayerTopics();
+      set({ topics, loading: false });
+    } catch (e: any) {
+      set({ error: e.message || 'Erreur de chargement', loading: false });
+    }
+  },
+
+  setTopics: (topics) => set({ topics }),
+
+  addToPortTopic: async (title) => {
+    try {
+      const saved = await createPrayerTopic(title, 'toport');
+      set((state) => ({ topics: [saved, ...state.topics] }));
+    } catch (e: any) {
+      set({ error: e.message || "Erreur lors de l'ajout" });
+      throw e;
+    }
+  },
+
+  addRecognitionTopic: async (title) => {
+    try {
+      const saved = await createPrayerTopic(title, 'recognition');
+      set((state) => ({ topics: [saved, ...state.topics] }));
+    } catch (e: any) {
+      set({ error: e.message || "Erreur lors de l'ajout" });
+      throw e;
+    }
+  },
+
+  markAnswered: async (id) => {
+    const topic = get().topics.find((t) => t.id === id);
+    if (!topic) return;
+    const previous = get().topics;
     set((state) => ({
-      toPortTopics: state.toPortTopics.map((t) =>
-        t.id === id ? { ...t, status: 'answered', answered_at: new Date().toISOString() } : t
+      topics: state.topics.map((t) =>
+        t.id === id ? { ...t, status: 'answered' as const, category: 'recognition' as const } : t
       ),
-    })),
-  deleteTopic: (id, category) =>
-    set((state) => ({
-      toPortTopics: category === 'toport' ? state.toPortTopics.filter((t) => t.id !== id) : state.toPortTopics,
-      recognitionTopics: category === 'recognition' ? state.recognitionTopics.filter((t) => t.id !== id) : state.recognitionTopics,
-    })),
+    }));
+    try {
+      const saved = await markPrayerAnswered(topic);
+      set((state) => ({ topics: state.topics.map((t) => (t.id === id ? saved : t)) }));
+    } catch (e: any) {
+      set({ topics: previous, error: e.message || 'Erreur lors de la mise à jour' });
+      throw e;
+    }
+  },
+
+  deleteTopic: async (id) => {
+    const previous = get().topics;
+    set((state) => ({ topics: state.topics.filter((t) => t.id !== id) }));
+    try {
+      await deletePrayerTopic(id);
+    } catch (e: any) {
+      set({ topics: previous, error: e.message || 'Erreur lors de la suppression' });
+      throw e;
+    }
+  },
 }));
