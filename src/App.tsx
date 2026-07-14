@@ -11,7 +11,7 @@ import { BucketPage } from './pages/Bucket';
 import { PrayerPage } from './pages/Prayer';
 import { Button, Modal } from './components/UI';
 import { DEFAULT_GAMES } from './services/moduleService';
-import { uploadPhoto } from './services/supabase';
+import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
 import { BucketItem, PrayerTopic } from './types';
 import { T, CONTEXT, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
 
@@ -39,6 +39,35 @@ interface MemoryPrefill {
 }
 
 function App() {
+  if (!isSupabaseConfigured) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          padding: 32,
+          textAlign: 'center',
+          background: '#F7F3EC',
+          fontFamily: "-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",
+        }}
+      >
+        <h1 style={{ fontSize: 20, marginBottom: 12, color: '#2E2B27' }}>Configuration manquante</h1>
+        <p style={{ fontSize: 14, color: '#8A8377', lineHeight: 1.5, maxWidth: 320 }}>
+          Les variables d'environnement <code>VITE_SUPABASE_URL</code> et{' '}
+          <code>VITE_SUPABASE_ANON_KEY</code> ne sont pas définies. Ajoute-les dans les Environment
+          Variables de Vercel (Project Settings → Environment Variables), puis redéploie.
+        </p>
+      </div>
+    );
+  }
+
+  return <AppContent />;
+}
+
+function AppContent() {
   const [tab, setTab] = useState<Tab>('sofa');
   const [theme, setTheme] = useState<ThemeName>(getStoredTheme());
   const [showCreateMemory, setShowCreateMemory] = useState(false);
@@ -110,7 +139,7 @@ function App() {
         id: `instant_${Date.now()}`,
         text: draftText.trim(),
         date: new Date().toISOString(),
-        mood: draftMood as any,
+        ambiance: draftMood as any,
         location: draftLocation || undefined,
         source: draftSource,
         source_id: draftSourceId,

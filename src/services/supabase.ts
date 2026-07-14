@@ -3,7 +3,17 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const isSupabaseConfigured = !!supabaseUrl && !!supabaseKey;
+
+// createClient() lève une exception synchrone si l'URL est vide/invalide, ce qui
+// plante tout le bundle au chargement (écran blanc, avant même le premier rendu
+// React). On utilise donc une URL de secours syntaxiquement valide quand les
+// variables d'environnement ne sont pas encore configurées, et on expose
+// isSupabaseConfigured pour que l'UI puisse afficher un message clair.
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder-anon-key'
+);
 
 export async function getMemories() {
   const { data, error } = await supabase

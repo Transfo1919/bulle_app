@@ -5,13 +5,14 @@ export interface Memory {
   title?: string;
   text: string;
   date: string;
-  mood: Mood;
+  ambiance: Mood;
   location?: string;
   collection_id?: string;
   favorite?: boolean;
   source: 'manual' | 'game' | 'bucket' | 'prayer';
   source_id?: string;
   photo_url?: string;
+  poetic?: string;
   photos?: Photo[];
   created_at: string;
   updated_at: string;

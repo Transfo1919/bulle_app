@@ -1,45 +1,26 @@
 -- À exécuter dans Supabase → SQL Editor
--- Crée les tables manquantes pour Bucket, Prière et sessions de Jeux,
--- et ajoute les colonnes nécessaires à la table memories existante.
+-- Ta table "moments" existe déjà (id, text, ambiance, poetic, created_at,
+-- photo_url, source_id). Il manque juste les colonnes suivantes utilisées
+-- par l'app : date, location, collection_id, source, favorite, updated_at.
 
--- Nouvelles colonnes sur la table moments existante (lien vers un module + photo)
-alter table moments add column if not exists source_id text;
-alter table moments add column if not exists photo_url text;
+alter table moments add column if not exists date timestamptz;
+alter table moments add column if not exists location text;
+alter table moments add column if not exists collection_id text;
+alter table moments add column if not exists source text default 'manual';
+alter table moments add column if not exists favorite boolean default false;
+alter table moments add column if not exists updated_at timestamptz;
 
-create table if not exists bucket_items (
-  id text primary key,
-  title text not null,
-  timing text not null default 'plus_tard', -- 'ce_soir' | 'plus_tard'
-  completed boolean not null default false,
-  completed_at timestamptz,
-  created_at timestamptz not null default now()
-);
+-- Pour les instants déjà existants, on aligne "date" sur "created_at"
+-- s'il n'y a pas encore de valeur (évite les dates vides à l'affichage).
+update moments set date = created_at where date is null;
+update moments set updated_at = created_at where updated_at is null;
 
+-- Colonne "timing" (Ce soir / Plus tard) sur les envies
 alter table bucket_items add column if not exists timing text not null default 'plus_tard';
 
-create table if not exists prayer_topics (
-  id text primary key,
-  title text not null,
-  description text,
-  type text not null default 'ponctuel',
-  category text not null default 'toport', -- 'toport' | 'recognition'
-  status text not null default 'active',   -- 'active' | 'answered'
-  created_at timestamptz not null default now(),
-  answered_at timestamptz
-);
-
-create table if not exists game_sessions (
-  id text primary key,
-  game_id text not null,
-  played_at timestamptz not null default now(),
-  summary text,
-  winner text,
-  fun_fact text
-);
-
--- RLS: désactivée ici pour un usage MVP avec la clé "anon" partagée entre les deux
--- utilisateurs du couple (pas d'auth pour l'instant, conforme à la philosophie V1
--- "pas de compte"). À activer plus tard si vous ajoutez une authentification.
+-- RLS désactivée pour un usage MVP avec la clé "anon" partagée entre les
+-- deux utilisateurs du couple (pas d'auth pour l'instant).
+alter table moments disable row level security;
 alter table bucket_items disable row level security;
 alter table prayer_topics disable row level security;
 alter table game_sessions disable row level security;

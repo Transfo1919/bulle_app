@@ -165,7 +165,7 @@ export const MemoriesPage: React.FC<MemoriesPageProps> = ({ onCreateClick }) => 
             onClick={() => setSelectedMemory(memory)}
             style={{
               cursor: 'pointer',
-              borderLeft: `4px solid ${MOOD_COLORS[memory.mood]}`,
+              borderLeft: `4px solid ${MOOD_COLORS[memory.ambiance]}`,
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -211,7 +211,7 @@ export const MemoriesPage: React.FC<MemoriesPageProps> = ({ onCreateClick }) => 
                     width: 32,
                     height: 32,
                     borderRadius: '50%',
-                    background: MOOD_COLORS[memory.mood],
+                    background: MOOD_COLORS[memory.ambiance],
                     flexShrink: 0,
                   }}
                 />
