@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import * as Icons from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { Shuffle } from 'lucide-react';
 import { Card, Button, Modal } from '../components/UI';
 import { useMemoryStore } from '../stores/memoryStore';
 import { useBucketStore } from '../stores/bucketStore';
 import { usePrayerStore } from '../stores/prayerStore';
 import { useGameStore } from '../stores/gameStore';
+import { useCustomContentStore } from '../stores/customContentStore';
 import {
   DEFAULT_GAMES,
   JE_PENSE_ITEMS,
@@ -39,6 +41,15 @@ export const GamesPage: React.FC<AdeuxPageProps> = ({ onCreateMemoryFor }) => {
       <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>
         Passez un moment à deux, sans score ni compétition.
       </p>
+
+      <Button
+        full
+        style={{ background: CONTEXT.adeux, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+        onClick={() => setActiveId(pickRandom(DEFAULT_GAMES.map((g) => g.id)))}
+      >
+        <Shuffle size={16} />
+        Jeu surprise
+      </Button>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {DEFAULT_GAMES.map((game) => {
@@ -105,8 +116,8 @@ const ExperienceModal: React.FC<ExperienceModalProps> = ({ activeId, onClose, on
     <Modal isOpen={!!game} onClose={onClose} title={game?.name}>
       {activeId === 'je-pense' && <JePenseExperience onFinish={finish} onCreateMemoryFor={onCreateMemoryFor} />}
       {activeId === 'photo-mystere' && <PhotoMystereExperience onFinish={finish} onCreateMemoryFor={onCreateMemoryFor} />}
-      {activeId === 'qui-connait-mieux' && <QuiConnaitExperience onFinish={finish} />}
-      {activeId === 'et-si' && <EtSiExperience onFinish={finish} />}
+      {activeId === 'qui-connait-mieux' && <QuiConnaitExperience onFinish={finish} onCreateMemoryFor={onCreateMemoryFor} />}
+      {activeId === 'et-si' && <EtSiExperience onFinish={finish} onCreateMemoryFor={onCreateMemoryFor} />}
       {activeId === 'le-hasard' && <LeHasardExperience onFinish={finish} onCreateMemoryFor={onCreateMemoryFor} />}
       {activeId === 'defis' && <DefisExperience onFinish={finish} onCreateMemoryFor={onCreateMemoryFor} />}
     </Modal>
@@ -253,26 +264,42 @@ const PhotoMystereExperience: React.FC<{
 };
 
 // ─── Qui connaît le mieux ? ────────────────────────────────────
-const QuiConnaitExperience: React.FC<{ onFinish: (summary?: string) => void }> = ({ onFinish }) => {
+const QuiConnaitExperience: React.FC<{
+  onFinish: (summary?: string) => void;
+  onCreateMemoryFor?: (prefill: { text: string; source_id: string }) => void;
+}> = ({ onFinish, onCreateMemoryFor }) => {
+  const customQuestions = useCustomContentStore((s) => s.questions);
+  const addQuestion = useCustomContentStore((s) => s.addQuestion);
   const themes = Object.keys(QUI_CONNAIT_THEMES);
+
+  const pool = (theme: string) => [
+    ...QUI_CONNAIT_THEMES[theme],
+    ...customQuestions.filter((q) => q.theme === theme).map((q) => q.question),
+  ];
+
   const draw = () => {
     const theme = pickRandom(themes)!;
-    const question = pickRandom(QUI_CONNAIT_THEMES[theme])!;
+    const question = pickRandom(pool(theme))!;
     return { theme, question };
   };
   const [current, setCurrent] = useState(draw);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newTheme, setNewTheme] = useState(themes[0]);
+  const [newQuestion, setNewQuestion] = useState('');
+
+  const handleAdd = async () => {
+    if (!newQuestion.trim()) return;
+    await addQuestion(newTheme, newQuestion.trim());
+    setNewQuestion('');
+    setShowAdd(false);
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <span
         style={{
-          alignSelf: 'flex-start',
-          fontSize: 11,
-          color: CONTEXT.adeux,
-          background: `${CONTEXT.adeux}22`,
-          borderRadius: 20,
-          padding: '3px 10px',
-          fontWeight: 600,
+          alignSelf: 'flex-start', fontSize: 11, color: CONTEXT.adeux, background: `${CONTEXT.adeux}22`,
+          borderRadius: 20, padding: '3px 10px', fontWeight: 600,
         }}
       >
         {current.theme}
@@ -289,12 +316,50 @@ const QuiConnaitExperience: React.FC<{ onFinish: (summary?: string) => void }> =
           Terminé
         </Button>
       </div>
+      {onCreateMemoryFor && (
+        <button
+          onClick={() => onCreateMemoryFor({ text: `"${current.question}"`, source_id: 'qui-connait-mieux' })}
+          style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
+        >
+          Garder un souvenir de ce moment
+        </button>
+      )}
+
+      {showAdd ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, borderTop: `1px solid ${T.border}`, paddingTop: 14 }}>
+          <select
+            value={newTheme}
+            onChange={(e) => setNewTheme(e.target.value)}
+            style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '8px 10px', fontFamily: T.font, fontSize: 13, color: T.ink, background: T.surface }}
+          >
+            {themes.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input
+            type="text"
+            placeholder="Votre question..."
+            value={newQuestion}
+            onChange={(e) => setNewQuestion(e.target.value)}
+            style={{ border: `1px solid ${T.border}`, borderRadius: 10, padding: '8px 10px', fontFamily: T.font, fontSize: 13, color: T.ink, background: T.surface }}
+          />
+          <Button size="sm" onClick={handleAdd} style={{ background: CONTEXT.adeux }}>Ajouter à la banque</Button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowAdd(true)}
+          style={{ background: 'none', border: 'none', color: T.muted, fontSize: 12, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
+        >
+          + Ajouter votre propre question
+        </button>
+      )}
     </div>
   );
 };
 
 // ─── Et si... ────────────────────────────────────
-const EtSiExperience: React.FC<{ onFinish: (summary?: string) => void }> = ({ onFinish }) => {
+const EtSiExperience: React.FC<{
+  onFinish: (summary?: string) => void;
+  onCreateMemoryFor?: (prefill: { text: string; source_id: string }) => void;
+}> = ({ onFinish, onCreateMemoryFor }) => {
   const [question, setQuestion] = useState(() => pickRandom(ET_SI_QUESTIONS)!);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -307,6 +372,14 @@ const EtSiExperience: React.FC<{ onFinish: (summary?: string) => void }> = ({ on
           Terminé
         </Button>
       </div>
+      {onCreateMemoryFor && (
+        <button
+          onClick={() => onCreateMemoryFor({ text: question, source_id: 'et-si' })}
+          style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
+        >
+          Garder un souvenir de ce moment
+        </button>
+      )}
     </div>
   );
 };
@@ -316,12 +389,26 @@ const DefisExperience: React.FC<{
   onFinish: (summary?: string) => void;
   onCreateMemoryFor?: (prefill: { text: string; source_id: string }) => void;
 }> = ({ onFinish, onCreateMemoryFor }) => {
-  const [defi, setDefi] = useState(() => pickRandom(DEFIS)!);
+  const customDefis = useCustomContentStore((s) => s.defis);
+  const addDefi = useCustomContentStore((s) => s.addDefi);
+  const pool = () => [...DEFIS, ...customDefis.map((d) => d.text)];
+
+  const [defi, setDefi] = useState(() => pickRandom(pool())!);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newDefi, setNewDefi] = useState('');
+
+  const handleAdd = async () => {
+    if (!newDefi.trim()) return;
+    await addDefi(newDefi.trim());
+    setNewDefi('');
+    setShowAdd(false);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <PromptBox>{defi}</PromptBox>
       <div style={{ display: 'flex', gap: 8 }}>
-        <Button full variant="secondary" onClick={() => setDefi(pickRandom(DEFIS)!)}>
+        <Button full variant="secondary" onClick={() => setDefi(pickRandom(pool())!)}>
           Nouveau défi
         </Button>
         <Button full style={{ background: CONTEXT.adeux }} onClick={() => onFinish(defi)}>
@@ -334,6 +421,26 @@ const DefisExperience: React.FC<{
           style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
         >
           Garder un souvenir de ce défi
+        </button>
+      )}
+
+      {showAdd ? (
+        <div style={{ display: 'flex', gap: 8, borderTop: `1px solid ${T.border}`, paddingTop: 14 }}>
+          <input
+            type="text"
+            placeholder="Votre défi..."
+            value={newDefi}
+            onChange={(e) => setNewDefi(e.target.value)}
+            style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: 10, padding: '8px 10px', fontFamily: T.font, fontSize: 13, color: T.ink, background: T.surface }}
+          />
+          <Button size="sm" onClick={handleAdd} style={{ background: CONTEXT.adeux }}>Ajouter</Button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowAdd(true)}
+          style={{ background: 'none', border: 'none', color: T.muted, fontSize: 12, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
+        >
+          + Ajouter votre propre défi
         </button>
       )}
     </div>

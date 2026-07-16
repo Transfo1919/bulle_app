@@ -214,7 +214,7 @@ export const BucketPage: React.FC<BucketPageProps> = ({ onCreateMemoryFor }) => 
 
       {items.length === 0 && (
         <Card style={{ textAlign: 'center', padding: 40, color: T.muted }}>
-          Commencez à rêver ensemble...
+          Une petite idée aujourd'hui peut devenir un beau souvenir demain.
         </Card>
       )}
     </div>

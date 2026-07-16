@@ -65,17 +65,20 @@ export const Button: React.FC<ButtonProps> = ({
 interface CardProps {
   children: React.ReactNode;
   onClick?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
   style?: React.CSSProperties;
 }
 
-export const Card: React.FC<CardProps> = ({ children, onClick, style }) => (
+export const Card: React.FC<CardProps> = ({ children, onClick, onContextMenu, style }) => (
   <div
     onClick={onClick}
+    onContextMenu={onContextMenu}
     style={{
       background: T.surface,
       border: `1px solid ${T.border}`,
       borderRadius: T.radius,
-      padding: 16,
+      padding: 18,
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)',
       cursor: onClick ? 'pointer' : 'default',
       transition: 'all 0.2s ease',
       ...style,

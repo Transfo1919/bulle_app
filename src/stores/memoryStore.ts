@@ -1,24 +1,35 @@
 import { create } from 'zustand';
-import { Memory, Collection } from '../types';
-import { getMemories, createMemory, updateMemory as updateMemoryRemote, deleteMemory as deleteMemoryRemote } from '../services/supabase';
+import { Memory } from '../types';
+import {
+  getMemories,
+  getTrashedMemories,
+  createMemory,
+  updateMemory as updateMemoryRemote,
+  trashMemory,
+  restoreMemory,
+  permanentlyDeleteMemory,
+} from '../services/supabase';
+
+const TRASH_RETENTION_DAYS = 30;
 
 interface MemoryStore {
   memories: Memory[];
-  collections: Collection[];
+  trashed: Memory[];
   loading: boolean;
   error: string | null;
   loadMemories: () => Promise<void>;
+  loadTrash: () => Promise<void>;
   setMemories: (memories: Memory[]) => void;
-  addMemory: (memory: Memory) => Promise<void>;
+  addMemory: (memory: Omit<Memory, 'id'>) => Promise<void>;
   updateMemory: (id: string, memory: Partial<Memory>) => Promise<void>;
   deleteMemory: (id: string) => Promise<void>;
-  setCollections: (collections: Collection[]) => void;
-  addCollection: (collection: Collection) => void;
+  restore: (id: string) => Promise<void>;
+  purgeForever: (id: string) => Promise<void>;
 }
 
 export const useMemoryStore = create<MemoryStore>((set, get) => ({
   memories: [],
-  collections: [],
+  trashed: [],
   loading: false,
   error: null,
 
@@ -32,20 +43,41 @@ export const useMemoryStore = create<MemoryStore>((set, get) => ({
     }
   },
 
+  loadTrash: async () => {
+    try {
+      const trashed = await getTrashedMemories();
+      set({ trashed });
+      // Purge silencieuse des éléments en corbeille depuis plus de 30 jours.
+      const now = Date.now();
+      trashed.forEach((m) => {
+        if (m.deleted_at) {
+          const days = (now - new Date(m.deleted_at).getTime()) / (1000 * 60 * 60 * 24);
+          if (days >= TRASH_RETENTION_DAYS) {
+            permanentlyDeleteMemory(m.id).then(() => {
+              set((state) => ({ trashed: state.trashed.filter((t) => t.id !== m.id) }));
+            });
+          }
+        }
+      });
+    } catch {
+      /* silencieux */
+    }
+  },
+
   setMemories: (memories) => set({ memories }),
 
   addMemory: async (memory) => {
-    // optimistic update
-    set((state) => ({ memories: [memory, ...state.memories] }));
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMemory = { ...memory, id: tempId } as Memory;
+    set((state) => ({ memories: [optimisticMemory, ...state.memories] }));
     try {
       const saved = await createMemory(memory);
       set((state) => ({
-        memories: state.memories.map((m) => (m.id === memory.id ? saved : m)),
+        memories: state.memories.map((m) => (m.id === tempId ? saved : m)),
       }));
     } catch (e: any) {
-      // rollback on failure
       set((state) => ({
-        memories: state.memories.filter((m) => m.id !== memory.id),
+        memories: state.memories.filter((m) => m.id !== tempId),
         error: e.message || "Erreur lors de l'enregistrement",
       }));
       throw e;
@@ -65,17 +97,38 @@ export const useMemoryStore = create<MemoryStore>((set, get) => ({
     }
   },
 
+  // Suppression = passage en corbeille (30 jours), jamais immédiate.
   deleteMemory: async (id) => {
     const previous = get().memories;
+    const item = previous.find((m) => m.id === id);
     set((state) => ({ memories: state.memories.filter((m) => m.id !== id) }));
     try {
-      await deleteMemoryRemote(id);
+      const trashedItem = await trashMemory(id);
+      if (item) set((state) => ({ trashed: [trashedItem, ...state.trashed] }));
     } catch (e: any) {
       set({ memories: previous, error: e.message || 'Erreur lors de la suppression' });
       throw e;
     }
   },
 
-  setCollections: (collections) => set({ collections }),
-  addCollection: (collection) => set((state) => ({ collections: [collection, ...state.collections] })),
+  restore: async (id) => {
+    const previous = get().trashed;
+    set((state) => ({ trashed: state.trashed.filter((m) => m.id !== id) }));
+    try {
+      const restored = await restoreMemory(id);
+      set((state) => ({ memories: [restored, ...state.memories] }));
+    } catch {
+      set({ trashed: previous });
+    }
+  },
+
+  purgeForever: async (id) => {
+    const previous = get().trashed;
+    set((state) => ({ trashed: state.trashed.filter((m) => m.id !== id) }));
+    try {
+      await permanentlyDeleteMemory(id);
+    } catch {
+      set({ trashed: previous });
+    }
+  },
 }));

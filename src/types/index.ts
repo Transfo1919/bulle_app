@@ -7,13 +7,14 @@ export interface Memory {
   date: string;
   ambiance: Mood;
   location?: string;
-  collection_id?: string;
+  collection_ids?: string[];
   favorite?: boolean;
   source: 'manual' | 'game' | 'bucket' | 'prayer';
   source_id?: string;
   photo_url?: string;
   poetic?: string;
   photos?: Photo[];
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -34,9 +35,6 @@ export interface Collection {
   id: string;
   name: string;
   cover_photo?: string;
-  start_date: string;
-  end_date: string;
-  memories: Memory[];
   created_at: string;
 }
 
@@ -75,6 +73,19 @@ export interface PrayerTopic {
   status: 'active' | 'answered';
   created_at: string;
   answered_at?: string;
+}
+
+export interface CustomQuestion {
+  id: string;
+  theme: string;
+  question: string;
+  created_at: string;
+}
+
+export interface CustomDefi {
+  id: string;
+  text: string;
+  created_at: string;
 }
 
 export interface Settings {

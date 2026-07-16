@@ -19,8 +19,20 @@ export async function getMemories() {
   const { data, error } = await supabase
     .from('moments')
     .select('*')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
   
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getTrashedMemories() {
+  const { data, error } = await supabase
+    .from('moments')
+    .select('*')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+
   if (error) throw error;
   return data || [];
 }
@@ -48,7 +60,33 @@ export async function updateMemory(id: string, updates: any) {
   return data;
 }
 
-export async function deleteMemory(id: string) {
+// Suppression douce : on marque l'instant comme supprimé, il reste 30 jours
+// en corbeille avant purge définitive (déclenchée côté client au chargement).
+export async function trashMemory(id: string) {
+  const { data, error } = await supabase
+    .from('moments')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function restoreMemory(id: string) {
+  const { data, error } = await supabase
+    .from('moments')
+    .update({ deleted_at: null })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function permanentlyDeleteMemory(id: string) {
   const { error } = await supabase
     .from('moments')
     .delete()
@@ -182,4 +220,101 @@ export async function createGameSessionRemote(session: any) {
     .single();
   if (error) throw error;
   return data;
+}
+
+// ─── Collections ────────────────────────────────────
+export async function getCollectionsRemote() {
+  const { data, error } = await supabase
+    .from('collections')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createCollectionRemote(collection: any) {
+  const { data, error } = await supabase
+    .from('collections')
+    .insert([collection])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCollectionRemote(id: string) {
+  const { error } = await supabase.from('collections').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ─── Questions personnalisées (Qui connaît le mieux) ────────────────────────
+export async function getCustomQuestionsRemote() {
+  const { data, error } = await supabase
+    .from('custom_questions')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createCustomQuestionRemote(item: any) {
+  const { data, error } = await supabase
+    .from('custom_questions')
+    .insert([item])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCustomQuestionRemote(id: string, updates: any) {
+  const { data, error } = await supabase
+    .from('custom_questions')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCustomQuestionRemote(id: string) {
+  const { error } = await supabase.from('custom_questions').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// ─── Défis personnalisés ────────────────────────────────────
+export async function getCustomDefisRemote() {
+  const { data, error } = await supabase
+    .from('custom_defis')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createCustomDefiRemote(item: any) {
+  const { data, error } = await supabase
+    .from('custom_defis')
+    .insert([item])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCustomDefiRemote(id: string, updates: any) {
+  const { data, error } = await supabase
+    .from('custom_defis')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCustomDefiRemote(id: string) {
+  const { error } = await supabase.from('custom_defis').delete().eq('id', id);
+  if (error) throw error;
 }

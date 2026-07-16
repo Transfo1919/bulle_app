@@ -204,7 +204,7 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
 
       {allTopics === 0 && (
         <Card style={{ textAlign: 'center', padding: 40, color: T.muted }}>
-          Commencez par ajouter un sujet de prière...
+          Vous pouvez déposer ici ce que vous portez ensemble.
         </Card>
       )}
 

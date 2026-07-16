@@ -1,9 +1,12 @@
+// Bulle — build de vérification (force un nouveau déploiement)
 import React, { useState, useEffect } from 'react';
 import { Sofa, Image, Users, Sparkles, HandHeart, Camera, X } from 'lucide-react';
 import { useMemoryStore } from './stores/memoryStore';
 import { useGameStore } from './stores/gameStore';
 import { useBucketStore } from './stores/bucketStore';
 import { usePrayerStore } from './stores/prayerStore';
+import { useCollectionStore } from './stores/collectionStore';
+import { useCustomContentStore } from './stores/customContentStore';
 import { HomePage } from './pages/Home';
 import { MemoriesPage } from './pages/Memories';
 import { GamesPage } from './pages/Games';
@@ -12,15 +15,8 @@ import { PrayerPage } from './pages/Prayer';
 import { Button, Modal } from './components/UI';
 import { DEFAULT_GAMES } from './services/moduleService';
 import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
-import { BucketItem, PrayerTopic } from './types';
+import { BucketItem, PrayerTopic, Memory } from './types';
 import { T, CONTEXT, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
-
-const MOOD_OPTIONS = [
-  { id: 'soleil', label: 'Soleil', color: '#D4924A' },
-  { id: 'calme', label: 'Calme', color: '#7A9E8E' },
-  { id: 'gris', label: 'Gris', color: '#8E8E93' },
-  { id: 'tempete', label: 'Tempête', color: '#7B7FC4' },
-];
 
 const SOURCE_LABELS: Record<string, string> = {
   manual: 'Libre',
@@ -72,13 +68,14 @@ function AppContent() {
   const [theme, setTheme] = useState<ThemeName>(getStoredTheme());
   const [showCreateMemory, setShowCreateMemory] = useState(false);
   const [draftText, setDraftText] = useState('');
-  const [draftMood, setDraftMood] = useState('calme');
   const [draftLocation, setDraftLocation] = useState('');
   const [draftSource, setDraftSource] = useState<Source>('manual');
   const [draftSourceId, setDraftSourceId] = useState<string | undefined>(undefined);
   const [draftPhotoFile, setDraftPhotoFile] = useState<File | null>(null);
   const [draftPhotoPreview, setDraftPhotoPreview] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     applyTheme(theme);
@@ -91,26 +88,44 @@ function AppContent() {
   // Stores
   const setGames = useGameStore((state) => state.setGames);
   const addMemory = useMemoryStore((state) => state.addMemory);
+  const updateMemoryAction = useMemoryStore((state) => state.updateMemory);
   const loadMemories = useMemoryStore((state) => state.loadMemories);
   const memoryError = useMemoryStore((state) => state.error);
   const loadBucketItems = useBucketStore((state) => state.loadItems);
   const loadPrayerTopics = usePrayerStore((state) => state.loadTopics);
+  const loadCollections = useCollectionStore((state) => state.loadCollections);
+  const loadCustomContent = useCustomContentStore((state) => state.loadCustomContent);
 
   useEffect(() => {
     setGames(DEFAULT_GAMES);
     loadMemories();
     loadBucketItems();
     loadPrayerTopics();
-  }, [setGames, loadMemories, loadBucketItems, loadPrayerTopics]);
+    loadCollections();
+    loadCustomContent();
+  }, [setGames, loadMemories, loadBucketItems, loadPrayerTopics, loadCollections, loadCustomContent]);
 
   const openCreateMemory = (prefill?: MemoryPrefill) => {
+    setEditingId(null);
     setDraftText(prefill?.text || '');
-    setDraftMood('calme');
     setDraftLocation('');
     setDraftSource(prefill?.source || 'manual');
     setDraftSourceId(prefill?.source_id);
     setDraftPhotoFile(null);
     setDraftPhotoPreview(null);
+    setSaveError(null);
+    setShowCreateMemory(true);
+  };
+
+  const openEditMemory = (memory: Memory) => {
+    setEditingId(memory.id);
+    setDraftText(memory.text);
+    setDraftLocation(memory.location || '');
+    setDraftSource(memory.source);
+    setDraftSourceId(memory.source_id);
+    setDraftPhotoFile(null);
+    setDraftPhotoPreview(memory.photo_url || null);
+    setSaveError(null);
     setShowCreateMemory(true);
   };
 
@@ -126,32 +141,51 @@ function AppContent() {
   };
 
   const handleCreateMemory = async () => {
-    if (!draftText.trim() || !draftMood) return;
+    if (!draftText.trim()) return;
     setSaving(true);
+    setSaveError(null);
     try {
       let photo_url: string | undefined;
       if (draftPhotoFile) {
         const path = `${Date.now()}_${draftPhotoFile.name}`;
-        photo_url = await uploadPhoto(draftPhotoFile, path);
+        try {
+          photo_url = await uploadPhoto(draftPhotoFile, path);
+        } catch (photoErr: any) {
+          throw new Error(`Échec de l'envoi de la photo : ${photoErr?.message || photoErr}`);
+        }
       }
 
-      const memory = {
-        id: `instant_${Date.now()}`,
-        text: draftText.trim(),
-        date: new Date().toISOString(),
-        ambiance: draftMood as any,
-        location: draftLocation || undefined,
-        source: draftSource,
-        source_id: draftSourceId,
-        photo_url,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      await addMemory(memory);
+      if (editingId) {
+        const updates: Partial<Memory> = {
+          text: draftText.trim(),
+          location: draftLocation || undefined,
+          source: draftSource,
+          source_id: draftSourceId,
+          updated_at: new Date().toISOString(),
+        };
+        if (photo_url) updates.photo_url = photo_url;
+        await updateMemoryAction(editingId, updates);
+      } else {
+        const memory = {
+          text: draftText.trim(),
+          date: new Date().toISOString(),
+          // L'ambiance n'est plus choisie manuellement : la couleur affichée
+          // dépend désormais automatiquement de ce à quoi l'instant est lié
+          // (voir SOURCE_COLORS). On garde une valeur neutre par défaut.
+          ambiance: 'calme' as any,
+          location: draftLocation || undefined,
+          source: draftSource,
+          source_id: draftSourceId,
+          photo_url,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await addMemory(memory);
+      }
       setShowCreateMemory(false);
-    } catch {
-      // error already surfaced via memoryError
+      setEditingId(null);
+    } catch (e: any) {
+      setSaveError(e?.message || "Une erreur est survenue lors de l'enregistrement.");
     }
     setSaving(false);
   };
@@ -220,7 +254,7 @@ function AppContent() {
         {tab === 'sofa' && (
           <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} />
         )}
-        {tab === 'instants' && <MemoriesPage onCreateClick={() => openCreateMemory()} />}
+        {tab === 'instants' && <MemoriesPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
         {tab === 'adeux' && <GamesPage onCreateMemoryFor={handleCreateMemoryForAdeux} />}
         {tab === 'envies' && <BucketPage onCreateMemoryFor={handleCreateMemoryForBucket} />}
         {tab === 'priere' && <PrayerPage onCreateMemoryFor={handleCreateMemoryForPrayer} />}
@@ -249,8 +283,13 @@ function AppContent() {
       </div>
 
       {/* Create Memory (Instant) Modal */}
-      <Modal isOpen={showCreateMemory} onClose={() => setShowCreateMemory(false)} title="Créer un instant">
+      <Modal isOpen={showCreateMemory} onClose={() => setShowCreateMemory(false)} title={editingId ? 'Modifier l\'instant' : 'Créer un instant'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {saveError && (
+            <div style={{ background: '#FFF0EE', border: '1px solid #F5C6C0', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, color: '#C0392B' }}>
+              {saveError}
+            </div>
+          )}
           <div>
             <label style={{ fontSize: 12, color: T.muted, display: 'block', marginBottom: 8 }}>
               Lié à...
@@ -355,30 +394,6 @@ function AppContent() {
             )}
           </div>
 
-          <div>
-            <label style={{ fontSize: 12, color: T.muted, display: 'block', marginBottom: 8 }}>
-              Comment te sens-tu ?
-            </label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {MOOD_OPTIONS.map((mood) => (
-                <button
-                  key={mood.id}
-                  onClick={() => setDraftMood(mood.id)}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '50%',
-                    background: mood.color,
-                    border: draftMood === mood.id ? `2px solid ${T.ink}` : '2px solid transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  title={mood.label}
-                />
-              ))}
-            </div>
-          </div>
-
           <input
             type="text"
             placeholder="Lieu (optionnel)"
@@ -401,7 +416,7 @@ function AppContent() {
               Annuler
             </Button>
             <Button full onClick={handleCreateMemory} disabled={!draftText.trim() || saving}>
-              {saving ? 'Enregistrement…' : 'Garder ce moment'}
+              {saving ? 'Enregistrement…' : editingId ? 'Enregistrer les modifications' : 'Garder ce moment'}
             </Button>
           </div>
         </div>

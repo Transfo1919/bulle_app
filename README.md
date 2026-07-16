@@ -1,21 +1,25 @@
-# React + TypeScript + Vite
+# Bulle
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Application de couple : Le Sofa, Instants, À deux, Envies, Prière.
+Réalisée avec React + Vite + TypeScript + Supabase.
 
-While this project uses React, Vite supports many popular JS frameworks. [See all the supported frameworks](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
+Voir [INSTALL.md](./INSTALL.md) pour l'installation et la configuration Supabase.
 
-## Deploy Your Own
+## Stack
 
-Deploy your own Vite project with Vercel.
+- React 18 + TypeScript + Vite
+- Zustand (état global)
+- Supabase (base de données + stockage photos)
+- Déploiement : Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/examples/tree/main/framework-boilerplates/vite-react&template=vite-react)
+## Structure
 
-_Live Example: https://vite-react-example.vercel.app_
-
-### Deploying From Your Terminal
-
-You can deploy your new Vite project with a single command from your terminal using [Vercel CLI](https://vercel.com/download):
-
-```shell
-$ vercel
+```
+src/
+├── App.tsx           # Navigation, modal de création/édition d'instant
+├── pages/             # Le Sofa, Instants, À deux, Envies, Prière
+├── stores/            # Zustand (memory, bucket, prayer, game, collection, contenu perso)
+├── services/          # Supabase + logique métier (moduleService)
+├── theme.ts           # Thèmes (Papier/Sauge/Nuit) + couleurs contextuelles par module
+└── types/             # Types partagés
 ```

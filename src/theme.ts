@@ -6,7 +6,7 @@ export const T = {
   muted: 'var(--muted)',
   sage: 'var(--accent)',
   border: 'var(--border)',
-  radius: 14,
+  radius: 20,
   font: "-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",
 };
 
@@ -24,6 +24,16 @@ export const THEME_LABELS: Record<ThemeName, string> = {
   papier: 'Papier',
   sauge: 'Sauge',
   nuit: 'Nuit',
+};
+
+// Couleur automatique d'un instant selon ce à quoi il est lié — jamais
+// choisie manuellement à la création.
+export type MemorySource = 'manual' | 'game' | 'bucket' | 'prayer';
+export const SOURCE_COLORS: Record<MemorySource, string> = {
+  manual: '#9C978A',
+  game: CONTEXT.adeux,
+  bucket: CONTEXT.envies,
+  prayer: CONTEXT.priere,
 };
 
 const STORAGE_KEY = 'bulle_theme';
