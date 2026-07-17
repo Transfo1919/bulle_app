@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { PrayerTopic } from '../types';
-import { getPrayerTopics, createPrayerTopic, markPrayerAnswered, deletePrayerTopic } from '../services/moduleService';
+import { getPrayerTopics, createPrayerTopic, markPrayerAnswered, updatePrayerTopicTitle, deletePrayerTopic } from '../services/prayerService';
 
 interface PrayerStore {
   topics: PrayerTopic[];
@@ -11,6 +11,7 @@ interface PrayerStore {
   addToPortTopic: (title: string) => Promise<void>;
   addRecognitionTopic: (title: string) => Promise<void>;
   markAnswered: (id: string) => Promise<void>;
+  updateTitle: (id: string, title: string) => Promise<void>;
   deleteTopic: (id: string) => Promise<void>;
 }
 
@@ -65,6 +66,18 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
       set((state) => ({ topics: state.topics.map((t) => (t.id === id ? saved : t)) }));
     } catch (e: any) {
       set({ topics: previous, error: e.message || 'Erreur lors de la mise à jour' });
+      throw e;
+    }
+  },
+
+  updateTitle: async (id, title) => {
+    const previous = get().topics;
+    set((state) => ({ topics: state.topics.map((t) => (t.id === id ? { ...t, title } : t)) }));
+    try {
+      const saved = await updatePrayerTopicTitle(id, title);
+      set((state) => ({ topics: state.topics.map((t) => (t.id === id ? saved : t)) }));
+    } catch (e: any) {
+      set({ topics: previous, error: e.message || 'Erreur lors de la modification' });
       throw e;
     }
   },

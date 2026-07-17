@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Game, GameSession } from '../types';
-import { createGameSession as createGameSessionRemote } from '../services/moduleService';
+import { createGameSession as createGameSessionRemote } from '../services/adeuxContent';
 
 interface GameStore {
   games: Game[];

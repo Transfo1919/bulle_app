@@ -134,3 +134,118 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 export const Divider = () => (
   <div style={{ height: 1, background: T.border, margin: '16px 0' }} />
 );
+
+export const ErrorBanner: React.FC<{ message: string }> = ({ message }) => (
+  <div
+    style={{
+      background: '#FFF0EE',
+      border: '1px solid #F5C6C0',
+      borderRadius: 10,
+      padding: '10px 14px',
+      fontSize: 12.5,
+      color: '#C0392B',
+    }}
+  >
+    {message}
+  </div>
+);
+
+export const Spinner: React.FC<{ label?: string }> = ({ label }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '24px 0', color: T.muted, fontSize: 13 }}>
+    <div
+      style={{
+        width: 16,
+        height: 16,
+        borderRadius: '50%',
+        border: `2px solid ${T.border}`,
+        borderTopColor: T.sage,
+        animation: 'bulle-spin 0.8s linear infinite',
+      }}
+    />
+    {label || 'Chargement...'}
+    <style>{'@keyframes bulle-spin { to { transform: rotate(360deg); } }'}</style>
+  </div>
+);
+
+export interface ActionSheetItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}
+
+export const ActionRow: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }> = ({
+  icon,
+  label,
+  onClick,
+  danger,
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      padding: '12px 8px',
+      background: 'none',
+      border: 'none',
+      borderBottom: `1px solid ${T.border}`,
+      cursor: 'pointer',
+      fontFamily: T.font,
+      fontSize: 14,
+      color: danger ? '#C0392B' : T.ink,
+      textAlign: 'left',
+      width: '100%',
+    }}
+  >
+    {icon}
+    {label}
+  </button>
+);
+
+// Menu d'actions ouvert par appui long ou clic droit sur une entrée
+// (Instants, Envies, Prière...). Un seul composant réutilisé partout.
+export const ActionSheet: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  items: ActionSheetItem[];
+}> = ({ isOpen, onClose, title = 'Actions', items }) => (
+  <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {items.map((item) => (
+        <ActionRow
+          key={item.key}
+          icon={item.icon}
+          label={item.label}
+          danger={item.danger}
+          onClick={() => {
+            item.onClick();
+            onClose();
+          }}
+        />
+      ))}
+    </div>
+  </Modal>
+);
+
+// Détecteur d'appui long (tactile + souris) pour ouvrir une ActionSheet
+// sur mobile ("appui long") tout en gardant le clic droit sur desktop.
+export const LongPressWrapper: React.FC<{ children: React.ReactNode; onLongPress: () => void }> = ({
+  children,
+  onLongPress,
+}) => {
+  const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const start = () => {
+    timer.current = setTimeout(onLongPress, 550);
+  };
+  const clear = () => {
+    if (timer.current) clearTimeout(timer.current);
+  };
+  return (
+    <div onTouchStart={start} onTouchEnd={clear} onTouchMove={clear} onMouseDown={start} onMouseUp={clear} onMouseLeave={clear}>
+      {children}
+    </div>
+  );
+};

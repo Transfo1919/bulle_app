@@ -8,13 +8,14 @@ import { usePrayerStore } from './stores/prayerStore';
 import { useCollectionStore } from './stores/collectionStore';
 import { useCustomContentStore } from './stores/customContentStore';
 import { HomePage } from './pages/Home';
-import { MemoriesPage } from './pages/Memories';
-import { GamesPage } from './pages/Games';
-import { BucketPage } from './pages/Bucket';
+import { InstantsPage } from './pages/Instants';
+import { AdeuxPage } from './pages/Adeux';
+import { EnviesPage } from './pages/Envies';
 import { PrayerPage } from './pages/Prayer';
-import { Button, Modal } from './components/UI';
-import { DEFAULT_GAMES } from './services/moduleService';
+import { Button, Modal, ErrorBanner } from './components/UI';
+import { DEFAULT_GAMES } from './services/adeuxContent';
 import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
+import { compressPhoto } from './services/photoService';
 import { BucketItem, PrayerTopic, Memory } from './types';
 import { T, CONTEXT, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
 
@@ -90,7 +91,6 @@ function AppContent() {
   const addMemory = useMemoryStore((state) => state.addMemory);
   const updateMemoryAction = useMemoryStore((state) => state.updateMemory);
   const loadMemories = useMemoryStore((state) => state.loadMemories);
-  const memoryError = useMemoryStore((state) => state.error);
   const loadBucketItems = useBucketStore((state) => state.loadItems);
   const loadPrayerTopics = usePrayerStore((state) => state.loadTopics);
   const loadCollections = useCollectionStore((state) => state.loadCollections);
@@ -147,9 +147,10 @@ function AppContent() {
     try {
       let photo_url: string | undefined;
       if (draftPhotoFile) {
-        const path = `${Date.now()}_${draftPhotoFile.name}`;
         try {
-          photo_url = await uploadPhoto(draftPhotoFile, path);
+          const compressed = await compressPhoto(draftPhotoFile);
+          const path = `${Date.now()}_${compressed.name}`;
+          photo_url = await uploadPhoto(compressed, path);
         } catch (photoErr: any) {
           throw new Error(`Échec de l'envoi de la photo : ${photoErr?.message || photoErr}`);
         }
@@ -232,31 +233,14 @@ function AppContent() {
         </button>
       </div>
 
-      {/* Error banner */}
-      {memoryError && (
-        <div
-          style={{
-            margin: '10px 16px 0',
-            background: '#FFF0EE',
-            border: '1px solid #F5C6C0',
-            borderRadius: 10,
-            padding: '10px 14px',
-            fontSize: 12.5,
-            color: '#C0392B',
-          }}
-        >
-          {memoryError}
-        </div>
-      )}
-
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {tab === 'sofa' && (
           <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} />
         )}
-        {tab === 'instants' && <MemoriesPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
-        {tab === 'adeux' && <GamesPage onCreateMemoryFor={handleCreateMemoryForAdeux} />}
-        {tab === 'envies' && <BucketPage onCreateMemoryFor={handleCreateMemoryForBucket} />}
+        {tab === 'instants' && <InstantsPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
+        {tab === 'adeux' && <AdeuxPage onCreateMemoryFor={handleCreateMemoryForAdeux} />}
+        {tab === 'envies' && <EnviesPage onCreateMemoryFor={handleCreateMemoryForBucket} />}
         {tab === 'priere' && <PrayerPage onCreateMemoryFor={handleCreateMemoryForPrayer} />}
       </div>
 
@@ -285,11 +269,7 @@ function AppContent() {
       {/* Create Memory (Instant) Modal */}
       <Modal isOpen={showCreateMemory} onClose={() => setShowCreateMemory(false)} title={editingId ? 'Modifier l\'instant' : 'Créer un instant'}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {saveError && (
-            <div style={{ background: '#FFF0EE', border: '1px solid #F5C6C0', borderRadius: 10, padding: '10px 14px', fontSize: 12.5, color: '#C0392B' }}>
-              {saveError}
-            </div>
-          )}
+          {saveError && <ErrorBanner message={saveError} />}
           <div>
             <label style={{ fontSize: 12, color: T.muted, display: 'block', marginBottom: 8 }}>
               Lié à...

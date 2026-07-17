@@ -36,6 +36,20 @@ export const SOURCE_COLORS: Record<MemorySource, string> = {
   prayer: CONTEXT.priere,
 };
 
+export const SOURCE_LABELS: Record<MemorySource, string> = {
+  manual: 'Libre',
+  game: 'À deux',
+  bucket: 'Envies',
+  prayer: 'Prière',
+};
+
+// Libellé affiché sur les cartes d'instants ("Lié à un moment à deux"...)
+export const SOURCE_LINK_LABELS: Partial<Record<MemorySource, string>> = {
+  game: 'Lié à un moment à deux',
+  bucket: 'Lié à une envie',
+  prayer: 'Lié à une prière',
+};
+
 const STORAGE_KEY = 'bulle_theme';
 
 export function applyTheme(name: ThemeName) {

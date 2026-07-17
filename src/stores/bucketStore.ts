@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { BucketItem } from '../types';
-import { getBucketItems, createBucketItem, toggleBucketItemComplete, deleteBucketItem } from '../services/moduleService';
+import { getBucketItems, createBucketItem, toggleBucketItemComplete, updateBucketItemTitle, deleteBucketItem } from '../services/envieService';
 
 interface BucketStore {
   items: BucketItem[];
@@ -10,6 +10,7 @@ interface BucketStore {
   setItems: (items: BucketItem[]) => void;
   addItem: (title: string, timing: 'ce_soir' | 'plus_tard') => Promise<void>;
   toggleComplete: (id: string) => Promise<void>;
+  updateTitle: (id: string, title: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
 }
 
@@ -52,6 +53,18 @@ export const useBucketStore = create<BucketStore>((set, get) => ({
       set((state) => ({ items: state.items.map((i) => (i.id === id ? saved : i)) }));
     } catch (e: any) {
       set({ items: previous, error: e.message || 'Erreur lors de la mise à jour' });
+      throw e;
+    }
+  },
+
+  updateTitle: async (id, title) => {
+    const previous = get().items;
+    set((state) => ({ items: state.items.map((i) => (i.id === id ? { ...i, title } : i)) }));
+    try {
+      const saved = await updateBucketItemTitle(id, title);
+      set((state) => ({ items: state.items.map((i) => (i.id === id ? saved : i)) }));
+    } catch (e: any) {
+      set({ items: previous, error: e.message || 'Erreur lors de la modification' });
       throw e;
     }
   },
