@@ -514,7 +514,7 @@ const LeHasardExperience: React.FC<{
               Terminé
             </Button>
           </div>
-          {current.type !== 'instant' && onCreateMemoryFor && (
+          {onCreateMemoryFor && (
             <button
               onClick={() => onCreateMemoryFor({ text: current.label, source_id: current.id })}
               style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}

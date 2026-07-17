@@ -2,20 +2,24 @@ import React, { useMemo, useState, useRef } from 'react';
 import {
   Plus, Search, Clock, CalendarDays, Star, Sparkles as DiscoverIcon,
   Library, ChevronLeft, ChevronRight, Trash2, FolderPlus, Copy, Pencil, Undo2,
+  Users, HandHeart, Sparkles, Feather,
 } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { useCollectionStore } from '../stores/collectionStore';
 import { Card, Button, Modal, Divider, ErrorBanner, Spinner, LongPressWrapper } from '../components/UI';
 import { Memory } from '../types';
-import { T, CONTEXT, SOURCE_COLORS } from '../theme';
-
-const SOURCE_LABELS: Record<string, string> = {
-  game: 'Lié à un moment à deux',
-  bucket: 'Lié à une envie',
-  prayer: 'Lié à une prière',
-};
+import { T, CONTEXT, SOURCE_COLORS, SOURCE_LINK_LABELS } from '../theme';
 
 type TopMode = 'decouvrir' | 'bibliotheque';
+
+const sourceIcon = (source: Memory['source']) => {
+  switch (source) {
+    case 'game': return Users;
+    case 'bucket': return Sparkles;
+    case 'prayer': return HandHeart;
+    default: return Feather;
+  }
+};
 type ViewMode = 'recents' | 'chrono';
 type SourceFilter = 'tous' | 'photos' | 'adeux' | 'envies' | 'priere' | 'libres' | 'favoris';
 
@@ -157,14 +161,16 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
                 {current.photo_url ? (
                   <img src={current.photo_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: T.radius - 6, marginBottom: 14 }} />
                 ) : (
-                  <div style={{ width: '100%', height: 120, borderRadius: T.radius - 6, marginBottom: 14, background: SOURCE_COLORS[current.source] + '22' }} />
+                  <div style={{ width: '100%', height: 120, borderRadius: T.radius - 6, marginBottom: 14, background: SOURCE_COLORS[current.source] + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {React.createElement(sourceIcon(current.source), { size: 28, color: SOURCE_COLORS[current.source] })}
+                  </div>
                 )}
                 <p style={{ fontSize: 12, color: T.muted, margin: '0 0 8px 0' }}>
                   {current.poetic || new Date(current.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
                 <p style={{ fontSize: 16, lineHeight: 1.5, margin: 0, flex: 1 }}>{current.text}</p>
                 {current.source !== 'manual' && (
-                  <p style={{ fontSize: 11, color: T.sage, margin: '10px 0 0 0' }}>{SOURCE_LABELS[current.source]}</p>
+                  <p style={{ fontSize: 11, color: SOURCE_COLORS[current.source], fontWeight: 600, margin: '10px 0 0 0' }}>{SOURCE_LINK_LABELS[current.source]}</p>
                 )}
               </Card>
             )}
@@ -238,8 +244,18 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
               >
                 <LongPressWrapper onLongPress={() => setActionMemory(memory)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    {memory.photo_url && (
+                    {memory.photo_url ? (
                       <img src={memory.photo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', marginRight: 12, flexShrink: 0 }} />
+                    ) : (
+                      <div
+                        style={{
+                          width: 48, height: 48, borderRadius: 10, marginRight: 12, flexShrink: 0,
+                          background: `${SOURCE_COLORS[memory.source]}22`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >
+                        {React.createElement(sourceIcon(memory.source), { size: 18, color: SOURCE_COLORS[memory.source] })}
+                      </div>
                     )}
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -247,8 +263,8 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
                           {new Date(memory.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
                         {memory.source !== 'manual' && (
-                          <span style={{ fontSize: 10, color: T.sage, background: T.paper2, borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
-                            {SOURCE_LABELS[memory.source]}
+                          <span style={{ fontSize: 10, color: SOURCE_COLORS[memory.source], background: `${SOURCE_COLORS[memory.source]}1A`, borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
+                            {SOURCE_LINK_LABELS[memory.source]}
                           </span>
                         )}
                       </div>
@@ -288,8 +304,18 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
       <Modal isOpen={!!selectedMemory} onClose={() => setSelectedMemory(null)} title="Instant">
         {selectedMemory && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {selectedMemory.photo_url && (
+            {selectedMemory.photo_url ? (
               <img src={selectedMemory.photo_url} alt="" style={{ width: '100%', maxHeight: 280, borderRadius: T.radius, objectFit: 'cover' }} />
+            ) : (
+              <div
+                style={{
+                  width: '100%', height: 140, borderRadius: T.radius,
+                  background: `${SOURCE_COLORS[selectedMemory.source]}22`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {React.createElement(sourceIcon(selectedMemory.source), { size: 32, color: SOURCE_COLORS[selectedMemory.source] })}
+              </div>
             )}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -302,7 +328,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
               </div>
               <p style={{ fontSize: 16, fontWeight: 500, margin: '8px 0 0 0', lineHeight: 1.5 }}>{selectedMemory.text}</p>
               {selectedMemory.source !== 'manual' && (
-                <p style={{ fontSize: 12, color: T.sage, margin: '8px 0 0 0' }}>{SOURCE_LABELS[selectedMemory.source]}</p>
+                <p style={{ fontSize: 12, color: SOURCE_COLORS[selectedMemory.source], fontWeight: 600, margin: '8px 0 0 0' }}>{SOURCE_LINK_LABELS[selectedMemory.source]}</p>
               )}
             </div>
             {selectedMemory.location && (

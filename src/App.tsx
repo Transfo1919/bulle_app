@@ -17,14 +17,7 @@ import { DEFAULT_GAMES } from './services/adeuxContent';
 import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
 import { compressPhoto } from './services/photoService';
 import { BucketItem, PrayerTopic, Memory } from './types';
-import { T, CONTEXT, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
-
-const SOURCE_LABELS: Record<string, string> = {
-  manual: 'Libre',
-  game: 'À deux',
-  bucket: 'Envies',
-  prayer: 'Prière',
-};
+import { T, CONTEXT, SOURCE_COLORS, SOURCE_LABELS, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
 
 type Source = 'manual' | 'game' | 'bucket' | 'prayer';
 type Tab = 'sofa' | 'instants' | 'adeux' | 'envies' | 'priere';
@@ -282,8 +275,8 @@ function AppContent() {
                   style={{
                     padding: '6px 12px',
                     borderRadius: 20,
-                    border: draftSource === s ? `1px solid ${T.sage}` : `1px solid ${T.border}`,
-                    background: draftSource === s ? T.sage : 'transparent',
+                    border: draftSource === s ? `1px solid ${SOURCE_COLORS[s]}` : `1px solid ${T.border}`,
+                    background: draftSource === s ? SOURCE_COLORS[s] : 'transparent',
                     color: draftSource === s ? '#fff' : T.muted,
                     fontSize: 12,
                     fontFamily: T.font,
