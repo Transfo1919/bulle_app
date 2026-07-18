@@ -2,24 +2,14 @@ import React, { useMemo, useState, useRef } from 'react';
 import {
   Plus, Search, Clock, CalendarDays, Star, Sparkles as DiscoverIcon,
   Library, ChevronLeft, ChevronRight, Trash2, FolderPlus, Copy, Pencil, Undo2,
-  Users, HandHeart, Sparkles, Feather,
 } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { useCollectionStore } from '../stores/collectionStore';
-import { Card, Button, Modal, Divider, ErrorBanner, Spinner, LongPressWrapper } from '../components/UI';
+import { Card, Button, Modal, Divider, ErrorBanner, Spinner, LongPressWrapper, Toast } from '../components/UI';
 import { Memory } from '../types';
 import { T, CONTEXT, SOURCE_COLORS, SOURCE_LINK_LABELS } from '../theme';
 
 type TopMode = 'decouvrir' | 'bibliotheque';
-
-const sourceIcon = (source: Memory['source']) => {
-  switch (source) {
-    case 'game': return Users;
-    case 'bucket': return Sparkles;
-    case 'prayer': return HandHeart;
-    default: return Feather;
-  }
-};
 type ViewMode = 'recents' | 'chrono';
 type SourceFilter = 'tous' | 'photos' | 'adeux' | 'envies' | 'priere' | 'libres' | 'favoris';
 
@@ -37,6 +27,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
   const updateMemory = useMemoryStore((state) => state.updateMemory);
   const deleteMemory = useMemoryStore((state) => state.deleteMemory);
   const restore = useMemoryStore((state) => state.restore);
+  const purgeForever = useMemoryStore((state) => state.purgeForever);
   const collections = useCollectionStore((state) => state.collections);
   const addCollection = useCollectionStore((state) => state.addCollection);
 
@@ -46,22 +37,33 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
   const [collectionPickerFor, setCollectionPickerFor] = useState<Memory | null>(null);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [showTrash, setShowTrash] = useState(false);
+  const [confirmPurge, setConfirmPurge] = useState<Memory | null>(null);
+  const [undoToastId, setUndoToastId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('recents');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('tous');
   const [collectionFilter, setCollectionFilter] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedFlash, setCopiedFlash] = useState(false);
 
+  const [shuffleKey, setShuffleKey] = useState(0);
   const discoverOrder = useMemo(
     () => [...memories].sort(() => Math.random() - 0.5),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memories.length]
+    [memories.length, shuffleKey]
   );
   const [discoverIndex, setDiscoverIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
   const goNext = () => setDiscoverIndex((i) => (i + 1) % Math.max(discoverOrder.length, 1));
   const goPrev = () => setDiscoverIndex((i) => (i - 1 + discoverOrder.length) % Math.max(discoverOrder.length, 1));
+
+  const openDiscover = () => {
+    setShuffleKey((k) => k + 1);
+    setDiscoverIndex(0);
+    setTopMode('decouvrir');
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -83,11 +85,13 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
     let base =
       viewMode === 'recents'
         ? [...memories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        : [...memories].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        : [...memories].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     return base.filter((m) => {
       if (searchTerm && !m.text.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (collectionFilter && !(m.collection_ids || []).includes(collectionFilter)) return false;
+      if (dateFrom && new Date(m.date) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(m.date) > new Date(`${dateTo}T23:59:59`)) return false;
       switch (sourceFilter) {
         case 'photos': return !!m.photo_url;
         case 'adeux': return m.source === 'game';
@@ -98,7 +102,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
         default: return true;
       }
     });
-  }, [viewMode, memories, searchTerm, sourceFilter, collectionFilter]);
+  }, [viewMode, memories, searchTerm, sourceFilter, collectionFilter, dateFrom, dateTo]);
 
   const FILTERS: { id: SourceFilter; label: string }[] = [
     { id: 'tous', label: 'Tous' },
@@ -145,7 +149,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
       {loading && memories.length === 0 && <Spinner label="Chargement des instants..." />}
 
       <div style={{ display: 'flex', gap: 6 }}>
-        <ModeButton active={topMode === 'decouvrir'} icon={<DiscoverIcon size={14} />} label="Découvrir" onClick={() => setTopMode('decouvrir')} />
+        <ModeButton active={topMode === 'decouvrir'} icon={<DiscoverIcon size={14} />} label="Découvrir" onClick={openDiscover} />
         <ModeButton active={topMode === 'bibliotheque'} icon={<Library size={14} />} label="Bibliothèque" onClick={() => setTopMode('bibliotheque')} />
       </div>
 
@@ -158,12 +162,8 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
             {current && (
               <Card onClick={() => setActionMemory(current)} style={{ cursor: 'pointer', minHeight: 320, display: 'flex', flexDirection: 'column' }}>
-                {current.photo_url ? (
+                {current.photo_url && (
                   <img src={current.photo_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: T.radius - 6, marginBottom: 14 }} />
-                ) : (
-                  <div style={{ width: '100%', height: 120, borderRadius: T.radius - 6, marginBottom: 14, background: SOURCE_COLORS[current.source] + '22', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {React.createElement(sourceIcon(current.source), { size: 28, color: SOURCE_COLORS[current.source] })}
-                  </div>
                 )}
                 <p style={{ fontSize: 12, color: T.muted, margin: '0 0 8px 0' }}>
                   {current.poetic || new Date(current.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -234,6 +234,30 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
             </div>
           )}
 
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: 10, padding: '8px 10px', fontFamily: T.font, fontSize: 12.5, color: T.ink, background: T.surface }}
+            />
+            <span style={{ color: T.muted, fontSize: 12 }}>à</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: 10, padding: '8px 10px', fontFamily: T.font, fontSize: 12.5, color: T.ink, background: T.surface }}
+            />
+            {(dateFrom || dateTo) && (
+              <button
+                onClick={() => { setDateFrom(''); setDateTo(''); }}
+                style={{ background: 'none', border: 'none', color: T.muted, fontSize: 12, cursor: 'pointer', fontFamily: T.font }}
+              >
+                Effacer
+              </button>
+            )}
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filtered.map((memory) => (
               <Card
@@ -244,18 +268,8 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
               >
                 <LongPressWrapper onLongPress={() => setActionMemory(memory)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    {memory.photo_url ? (
+                    {memory.photo_url && (
                       <img src={memory.photo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', marginRight: 12, flexShrink: 0 }} />
-                    ) : (
-                      <div
-                        style={{
-                          width: 48, height: 48, borderRadius: 10, marginRight: 12, flexShrink: 0,
-                          background: `${SOURCE_COLORS[memory.source]}22`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                      >
-                        {React.createElement(sourceIcon(memory.source), { size: 18, color: SOURCE_COLORS[memory.source] })}
-                      </div>
                     )}
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -304,18 +318,8 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
       <Modal isOpen={!!selectedMemory} onClose={() => setSelectedMemory(null)} title="Instant">
         {selectedMemory && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {selectedMemory.photo_url ? (
+            {selectedMemory.photo_url && (
               <img src={selectedMemory.photo_url} alt="" style={{ width: '100%', maxHeight: 280, borderRadius: T.radius, objectFit: 'cover' }} />
-            ) : (
-              <div
-                style={{
-                  width: '100%', height: 140, borderRadius: T.radius,
-                  background: `${SOURCE_COLORS[selectedMemory.source]}22`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                {React.createElement(sourceIcon(selectedMemory.source), { size: 32, color: SOURCE_COLORS[selectedMemory.source] })}
-              </div>
             )}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -358,7 +362,16 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
             />
             <ActionRow icon={<FolderPlus size={16} />} label="Ajouter à une collection" onClick={() => { setCollectionPickerFor(actionMemory); setActionMemory(null); }} />
             <ActionRow icon={<Copy size={16} />} label={copiedFlash ? 'Copié !' : 'Exporter (copier)'} onClick={() => handleExport(actionMemory)} />
-            <ActionRow icon={<Trash2 size={16} color="#C0392B" />} label="Supprimer" danger onClick={() => { deleteMemory(actionMemory.id); setActionMemory(null); }} />
+            <ActionRow
+              icon={<Trash2 size={16} color="#C0392B" />}
+              label="Supprimer"
+              danger
+              onClick={() => {
+                deleteMemory(actionMemory.id);
+                setUndoToastId(actionMemory.id);
+                setActionMemory(null);
+              }}
+            />
           </div>
         )}
       </Modal>
@@ -409,10 +422,45 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
               <button onClick={() => restore(m.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} title="Restaurer">
                 <Undo2 size={16} color={T.sage} />
               </button>
+              <button onClick={() => setConfirmPurge(m)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }} title="Supprimer définitivement">
+                <Trash2 size={16} color="#C0392B" />
+              </button>
             </Card>
           ))}
         </div>
       </Modal>
+
+      <Modal isOpen={!!confirmPurge} onClose={() => setConfirmPurge(null)} title="Supprimer définitivement ?">
+        {confirmPurge && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontSize: 14, color: T.ink, margin: 0 }}>
+              "{confirmPurge.text}" sera supprimé pour toujours, sans possibilité de le récupérer.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button full variant="secondary" onClick={() => setConfirmPurge(null)}>Annuler</Button>
+              <Button
+                full
+                style={{ background: '#C0392B' }}
+                onClick={() => {
+                  purgeForever(confirmPurge.id);
+                  setConfirmPurge(null);
+                }}
+              >
+                Supprimer définitivement
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {undoToastId && (
+        <Toast
+          message="Instant supprimé"
+          actionLabel="Annuler"
+          onAction={() => restore(undoToastId)}
+          onDismiss={() => setUndoToastId(null)}
+        />
+      )}
     </div>
   );
 };

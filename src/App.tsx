@@ -8,11 +8,11 @@ import { usePrayerStore } from './stores/prayerStore';
 import { useCollectionStore } from './stores/collectionStore';
 import { useCustomContentStore } from './stores/customContentStore';
 import { HomePage } from './pages/Home';
-import { InstantsPage } from './pages/Instants';
-import { AdeuxPage } from './pages/Adeux';
-import { EnviesPage } from './pages/Envies';
-import { PrayerPage } from './pages/Prayer';
-import { Button, Modal, ErrorBanner } from './components/UI';
+const InstantsPage = React.lazy(() => import('./pages/Instants').then((m) => ({ default: m.InstantsPage })));
+const AdeuxPage = React.lazy(() => import('./pages/Adeux').then((m) => ({ default: m.AdeuxPage })));
+const EnviesPage = React.lazy(() => import('./pages/Envies').then((m) => ({ default: m.EnviesPage })));
+const PrayerPage = React.lazy(() => import('./pages/Prayer').then((m) => ({ default: m.PrayerPage })));
+import { Button, Modal, ErrorBanner, Spinner } from './components/UI';
 import { DEFAULT_GAMES } from './services/adeuxContent';
 import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
 import { compressPhoto } from './services/photoService';
@@ -63,10 +63,12 @@ function AppContent() {
   const [showCreateMemory, setShowCreateMemory] = useState(false);
   const [draftText, setDraftText] = useState('');
   const [draftLocation, setDraftLocation] = useState('');
+  const [draftDate, setDraftDate] = useState('');
   const [draftSource, setDraftSource] = useState<Source>('manual');
   const [draftSourceId, setDraftSourceId] = useState<string | undefined>(undefined);
   const [draftPhotoFile, setDraftPhotoFile] = useState<File | null>(null);
   const [draftPhotoPreview, setDraftPhotoPreview] = useState<string | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -82,6 +84,7 @@ function AppContent() {
   // Stores
   const setGames = useGameStore((state) => state.setGames);
   const addMemory = useMemoryStore((state) => state.addMemory);
+  const memories = useMemoryStore((state) => state.memories);
   const updateMemoryAction = useMemoryStore((state) => state.updateMemory);
   const loadMemories = useMemoryStore((state) => state.loadMemories);
   const loadBucketItems = useBucketStore((state) => state.loadItems);
@@ -102,10 +105,12 @@ function AppContent() {
     setEditingId(null);
     setDraftText(prefill?.text || '');
     setDraftLocation('');
+    setDraftDate(new Date().toISOString().slice(0, 10));
     setDraftSource(prefill?.source || 'manual');
     setDraftSourceId(prefill?.source_id);
     setDraftPhotoFile(null);
     setDraftPhotoPreview(null);
+    setRemovePhoto(false);
     setSaveError(null);
     setShowCreateMemory(true);
   };
@@ -114,16 +119,19 @@ function AppContent() {
     setEditingId(memory.id);
     setDraftText(memory.text);
     setDraftLocation(memory.location || '');
+    setDraftDate(memory.date ? memory.date.slice(0, 10) : new Date().toISOString().slice(0, 10));
     setDraftSource(memory.source);
     setDraftSourceId(memory.source_id);
     setDraftPhotoFile(null);
     setDraftPhotoPreview(memory.photo_url || null);
+    setRemovePhoto(false);
     setSaveError(null);
     setShowCreateMemory(true);
   };
 
   const handlePhotoSelect = (file: File | null) => {
     setDraftPhotoFile(file);
+    setRemovePhoto(file === null);
     if (file) {
       const reader = new FileReader();
       reader.onload = () => setDraftPhotoPreview(reader.result as string);
@@ -152,17 +160,19 @@ function AppContent() {
       if (editingId) {
         const updates: Partial<Memory> = {
           text: draftText.trim(),
+          date: draftDate ? new Date(draftDate).toISOString() : undefined,
           location: draftLocation || undefined,
           source: draftSource,
           source_id: draftSourceId,
           updated_at: new Date().toISOString(),
         };
         if (photo_url) updates.photo_url = photo_url;
+        else if (removePhoto) updates.photo_url = null as any;
         await updateMemoryAction(editingId, updates);
       } else {
         const memory = {
           text: draftText.trim(),
-          date: new Date().toISOString(),
+          date: draftDate ? new Date(draftDate).toISOString() : new Date().toISOString(),
           // L'ambiance n'est plus choisie manuellement : la couleur affichée
           // dépend désormais automatiquement de ce à quoi l'instant est lié
           // (voir SOURCE_COLORS). On garde une valeur neutre par défaut.
@@ -183,6 +193,11 @@ function AppContent() {
     }
     setSaving(false);
   };
+
+  const knownLocations = React.useMemo(
+    () => Array.from(new Set(memories.map((m) => m.location).filter(Boolean))) as string[],
+    [memories]
+  );
 
   const handleCreateMemoryForBucket = (item: BucketItem) => {
     openCreateMemory({ text: item.title, source: 'bucket', source_id: item.id });
@@ -231,10 +246,12 @@ function AppContent() {
         {tab === 'sofa' && (
           <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} />
         )}
-        {tab === 'instants' && <InstantsPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
-        {tab === 'adeux' && <AdeuxPage onCreateMemoryFor={handleCreateMemoryForAdeux} />}
-        {tab === 'envies' && <EnviesPage onCreateMemoryFor={handleCreateMemoryForBucket} />}
-        {tab === 'priere' && <PrayerPage onCreateMemoryFor={handleCreateMemoryForPrayer} />}
+        <React.Suspense fallback={<Spinner />}>
+          {tab === 'instants' && <InstantsPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
+          {tab === 'adeux' && <AdeuxPage onCreateMemoryFor={handleCreateMemoryForAdeux} />}
+          {tab === 'envies' && <EnviesPage onCreateMemoryFor={handleCreateMemoryForBucket} />}
+          {tab === 'priere' && <PrayerPage onCreateMemoryFor={handleCreateMemoryForPrayer} />}
+        </React.Suspense>
       </div>
 
       {/* Bottom Navigation */}
@@ -367,22 +384,47 @@ function AppContent() {
             )}
           </div>
 
-          <input
-            type="text"
-            placeholder="Lieu (optionnel)"
-            value={draftLocation}
-            onChange={(e) => setDraftLocation(e.target.value)}
-            style={{
-              border: `1px solid ${T.border}`,
-              borderRadius: T.radius,
-              padding: '12px 16px',
-              fontFamily: T.font,
-              fontSize: 14,
-              outline: 'none',
-              color: T.ink,
-              background: T.surface,
-            }}
-          />
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              type="date"
+              value={draftDate}
+              onChange={(e) => setDraftDate(e.target.value)}
+              style={{
+                flex: 1,
+                border: `1px solid ${T.border}`,
+                borderRadius: T.radius,
+                padding: '12px 16px',
+                fontFamily: T.font,
+                fontSize: 14,
+                outline: 'none',
+                color: T.ink,
+                background: T.surface,
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Lieu (optionnel)"
+              value={draftLocation}
+              onChange={(e) => setDraftLocation(e.target.value)}
+              list="known-locations"
+              style={{
+                flex: 1,
+                border: `1px solid ${T.border}`,
+                borderRadius: T.radius,
+                padding: '12px 16px',
+                fontFamily: T.font,
+                fontSize: 14,
+                outline: 'none',
+                color: T.ink,
+                background: T.surface,
+              }}
+            />
+            <datalist id="known-locations">
+              {knownLocations.map((loc) => (
+                <option key={loc} value={loc} />
+              ))}
+            </datalist>
+          </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
             <Button full variant="secondary" onClick={() => setShowCreateMemory(false)}>

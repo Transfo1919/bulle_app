@@ -167,6 +167,56 @@ export const Spinner: React.FC<{ label?: string }> = ({ label }) => (
   </div>
 );
 
+// Petit message temporaire en bas d'écran (ex: "Instant supprimé · Annuler").
+export const Toast: React.FC<{
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+  onDismiss: () => void;
+  durationMs?: number;
+}> = ({ message, actionLabel, onAction, onDismiss, durationMs = 5000 }) => {
+  React.useEffect(() => {
+    const timer = setTimeout(onDismiss, durationMs);
+    return () => clearTimeout(timer);
+  }, [onDismiss, durationMs]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: 16,
+        right: 16,
+        bottom: 76,
+        zIndex: 200,
+        background: '#2B2B2B',
+        color: '#F5F1EA',
+        borderRadius: T.radius - 6,
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        fontFamily: T.font,
+        fontSize: 13,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+      }}
+    >
+      <span>{message}</span>
+      {actionLabel && onAction && (
+        <button
+          onClick={() => {
+            onAction();
+            onDismiss();
+          }}
+          style={{ background: 'none', border: 'none', color: T.sage, fontWeight: 700, cursor: 'pointer', fontFamily: T.font, fontSize: 13 }}
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export interface ActionSheetItem {
   key: string;
   icon: React.ReactNode;

@@ -18,12 +18,13 @@ export const CONTEXT = {
   instants: '#9C978A', // neutre
 };
 
-export type ThemeName = 'papier' | 'sauge' | 'nuit';
-export const THEME_ORDER: ThemeName[] = ['papier', 'sauge', 'nuit'];
+export type ThemeName = 'papier' | 'sauge' | 'nuit' | 'douceur';
+export const THEME_ORDER: ThemeName[] = ['papier', 'sauge', 'nuit', 'douceur'];
 export const THEME_LABELS: Record<ThemeName, string> = {
   papier: 'Papier',
   sauge: 'Sauge',
   nuit: 'Nuit',
+  douceur: 'Douceur',
 };
 
 // Couleur automatique d'un instant selon ce à quoi il est lié — jamais

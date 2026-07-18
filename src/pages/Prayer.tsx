@@ -216,11 +216,11 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
         {justAnswered && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ fontSize: 15, margin: 0, color: T.ink }}>"{justAnswered.title}" a rejoint votre reconnaissance.</p>
-            <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>Envie d'en garder un souvenir ?</p>
+            <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>Envie d'en garder un instant ?</p>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button full variant="secondary" onClick={() => setJustAnswered(null)}>Plus tard</Button>
               <Button full style={{ background: CONTEXT.priere }} onClick={() => { onCreateMemoryFor?.(justAnswered); setJustAnswered(null); }}>
-                Créer le souvenir
+                Créer l'instant
               </Button>
             </div>
           </div>

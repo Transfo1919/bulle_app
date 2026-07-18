@@ -139,7 +139,7 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
                           onClick={() => onCreateMemoryFor?.(item)}
                           style={{ background: 'none', border: `1px dashed ${T.border}`, borderRadius: T.radius - 4, padding: '8px 10px', fontSize: 12.5, color: CONTEXT.envies, cursor: 'pointer', fontFamily: T.font, textAlign: 'left', marginTop: 10 }}
                         >
-                          + Garder un souvenir de ce moment
+                          + Garder cet instant
                         </button>
                       )}
                     </LongPressWrapper>
@@ -151,7 +151,7 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
 
           {items.length === 0 && (
             <Card style={{ textAlign: 'center', padding: 40, color: T.muted }}>
-              Une petite idée aujourd'hui peut devenir un beau souvenir demain.
+              Une petite idée aujourd'hui peut devenir un bel instant demain.
             </Card>
           )}
         </>

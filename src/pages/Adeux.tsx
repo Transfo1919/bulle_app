@@ -175,7 +175,7 @@ const JePenseExperience: React.FC<{
           onClick={() => onCreateMemoryFor({ text: `"Je pense à..." — ${item}`, source_id: 'je-pense' })}
           style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
         >
-          Garder un souvenir de ce moment
+          Garder cet instant
         </button>
       )}
     </div>
@@ -196,7 +196,7 @@ const PhotoMystereExperience: React.FC<{
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <p style={{ fontSize: 14, color: T.muted, margin: 0 }}>
           Pas encore assez de photos dans vos Instants pour ce jeu (au moins 5 nécessaires). Ajoutez
-          quelques photos à vos souvenirs, puis revenez !
+          quelques photos à vos instants, puis revenez !
         </p>
         <Button full onClick={() => onFinish()}>
           Fermer
@@ -254,7 +254,7 @@ const PhotoMystereExperience: React.FC<{
               onClick={() => onCreateMemoryFor({ text: `Redécouvert : ${pick.text}`, source_id: 'photo-mystere' })}
               style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
             >
-              Garder un souvenir de ce moment
+              Garder cet instant
             </button>
           )}
         </>
@@ -321,7 +321,7 @@ const QuiConnaitExperience: React.FC<{
           onClick={() => onCreateMemoryFor({ text: `"${current.question}"`, source_id: 'qui-connait-mieux' })}
           style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
         >
-          Garder un souvenir de ce moment
+          Garder cet instant
         </button>
       )}
 
@@ -377,7 +377,7 @@ const EtSiExperience: React.FC<{
           onClick={() => onCreateMemoryFor({ text: question, source_id: 'et-si' })}
           style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
         >
-          Garder un souvenir de ce moment
+          Garder cet instant
         </button>
       )}
     </div>
@@ -420,7 +420,7 @@ const DefisExperience: React.FC<{
           onClick={() => onCreateMemoryFor({ text: defi, source_id: 'defis' })}
           style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
         >
-          Garder un souvenir de ce défi
+          Garder cet instant
         </button>
       )}
 
@@ -519,7 +519,7 @@ const LeHasardExperience: React.FC<{
               onClick={() => onCreateMemoryFor({ text: current.label, source_id: current.id })}
               style={{ background: 'none', border: 'none', color: CONTEXT.adeux, fontSize: 12.5, cursor: 'pointer', fontFamily: T.font, textAlign: 'center' }}
             >
-              Garder un souvenir de ce moment
+              Garder cet instant
             </button>
           )}
         </>

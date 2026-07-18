@@ -31,6 +31,7 @@ body[data-theme='sauge'] {
 }
 
 body[data-theme='nuit'] {
+  color-scheme: dark;
   --paper: #1C1B19;
   --paper2: #26241F;
   --surface: #26241F;
@@ -38,6 +39,16 @@ body[data-theme='nuit'] {
   --muted: #948C7C;
   --border: #3A372F;
   --accent: #8FA895;
+}
+
+body[data-theme='douceur'] {
+  --paper: #F8F5F1;
+  --paper2: #E8DDD1;
+  --surface: #FFFFFF;
+  --ink: #5A4A42;
+  --muted: #A9938A;
+  --border: #E8DDD1;
+  --accent: #A9B79D;
 }
 
 body {
