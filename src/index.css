@@ -58,4 +58,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.25s ease-out, color 0.25s ease-out;
+
+  /* Couleurs de modules et rayons — partagés par tous les thèmes,
+     pilotables en direct par l'éditeur de couleurs. */
+  --radius: 20px;
+  --radius-md: 14px;
+  --radius-sm: 16px;
+  --context-adeux: #C08552;
+  --context-envies: #C9A24B;
+  --context-priere: #6E8F72;
+  --context-instants: #9C978A;
+}
+
+/* iOS Safari zoome automatiquement (et dézoome mal) sur tout champ de
+   saisie affiché à moins de 16px. On force ce minimum partout, quel
+   que soit le style défini par ailleurs, pour éviter ce comportement
+   gênant sur mobile. */
+input, select, textarea {
+  font-size: 16px !important;
 }

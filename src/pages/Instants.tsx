@@ -44,6 +44,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
   const [collectionFilter, setCollectionFilter] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedFlash, setCopiedFlash] = useState(false);
 
@@ -90,6 +91,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
     return base.filter((m) => {
       if (searchTerm && !m.text.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (collectionFilter && !(m.collection_ids || []).includes(collectionFilter)) return false;
+      if (locationFilter && m.location !== locationFilter) return false;
       if (dateFrom && new Date(m.date) < new Date(dateFrom)) return false;
       if (dateTo && new Date(m.date) > new Date(`${dateTo}T23:59:59`)) return false;
       switch (sourceFilter) {
@@ -102,7 +104,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
         default: return true;
       }
     });
-  }, [viewMode, memories, searchTerm, sourceFilter, collectionFilter, dateFrom, dateTo]);
+  }, [viewMode, memories, searchTerm, sourceFilter, collectionFilter, locationFilter, dateFrom, dateTo]);
 
   const FILTERS: { id: SourceFilter; label: string }[] = [
     { id: 'tous', label: 'Tous' },
@@ -163,7 +165,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
             {current && (
               <Card onClick={() => setActionMemory(current)} style={{ cursor: 'pointer', minHeight: 320, display: 'flex', flexDirection: 'column' }}>
                 {current.photo_url && (
-                  <img src={current.photo_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: T.radius - 6, marginBottom: 14 }} />
+                  <img src={current.photo_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: T.radiusMd, marginBottom: 14 }} />
                 )}
                 <p style={{ fontSize: 12, color: T.muted, margin: '0 0 8px 0' }}>
                   {current.poetic || new Date(current.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -221,17 +223,25 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
           )}
 
           {locations.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflow: 'auto', paddingBottom: 4 }}>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              style={{
+                border: `1px solid ${locationFilter ? CONTEXT.instants : T.border}`,
+                borderRadius: 20,
+                padding: '6px 12px',
+                fontFamily: T.font,
+                fontSize: 12.5,
+                color: locationFilter ? CONTEXT.instants : T.muted,
+                background: T.surface,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <option value="">📍 Tous les lieux</option>
               {locations.map((loc) => (
-                <button
-                  key={loc}
-                  onClick={() => setSearchTerm(loc)}
-                  style={{ fontSize: 11.5, color: T.muted, background: T.paper2, border: 'none', borderRadius: 20, padding: '4px 10px', cursor: 'pointer', fontFamily: T.font }}
-                >
-                  📍 {loc}
-                </button>
+                <option key={loc} value={loc}>{loc}</option>
               ))}
-            </div>
+            </select>
           )}
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -386,7 +396,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
                   key={c.id}
                   onClick={() => toggleMemoryCollection(collectionPickerFor, c.id)}
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: T.radius - 6,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: T.radiusMd,
                     border: `1px solid ${active ? T.sage : T.border}`, background: active ? `${CONTEXT.instants}22` : 'transparent',
                     cursor: 'pointer', fontFamily: T.font, fontSize: 14, color: T.ink,
                   }}
@@ -402,7 +412,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
                 placeholder="Nouvelle collection..."
                 value={newCollectionName}
                 onChange={(e) => setNewCollectionName(e.target.value)}
-                style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: T.radius - 6, padding: '10px 14px', fontFamily: T.font, fontSize: 14, outline: 'none', color: T.ink, background: T.surface }}
+                style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '10px 14px', fontFamily: T.font, fontSize: 14, outline: 'none', color: T.ink, background: T.surface }}
               />
               <Button size="sm" onClick={handleCreateCollection}>Créer</Button>
             </div>

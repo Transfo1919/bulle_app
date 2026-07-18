@@ -124,7 +124,7 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
                         <p style={{ flex: 1, fontSize: 14, margin: 0, textDecoration: 'line-through', color: T.ink }}>{item.title}</p>
                       </div>
                       {linkedMemory ? (
-                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: T.paper2, borderRadius: T.radius - 4, padding: 10, marginTop: 10 }}>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: T.paper2, borderRadius: T.radiusSm, padding: 10, marginTop: 10 }}>
                           {linkedMemory.photo_url ? (
                             <img src={linkedMemory.photo_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
                           ) : (
@@ -137,7 +137,7 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
                       ) : (
                         <button
                           onClick={() => onCreateMemoryFor?.(item)}
-                          style={{ background: 'none', border: `1px dashed ${T.border}`, borderRadius: T.radius - 4, padding: '8px 10px', fontSize: 12.5, color: CONTEXT.envies, cursor: 'pointer', fontFamily: T.font, textAlign: 'left', marginTop: 10 }}
+                          style={{ background: 'none', border: `1px dashed ${T.border}`, borderRadius: T.radiusSm, padding: '8px 10px', fontSize: 12.5, color: CONTEXT.envies, cursor: 'pointer', fontFamily: T.font, textAlign: 'left', marginTop: 10 }}
                         >
                           + Garder cet instant
                         </button>

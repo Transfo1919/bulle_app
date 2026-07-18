@@ -1,6 +1,40 @@
 import { Game, GameSession } from '../types';
 import { getGameSessionsRemote, createGameSessionRemote } from './supabase';
 
+// Contenu chargé depuis des fichiers texte modifiables à la main, dans
+// /content à la racine du projet (un fichier par banque de contenu).
+// Éditer ces .txt, pousser sur GitHub, puis redéployer : le contenu se
+// met à jour automatiquement au prochain build, sans toucher au code.
+import jePenseRaw from '../../content/jepense.txt?raw';
+import questionsRaw from '../../content/questions.txt?raw';
+import etSiRaw from '../../content/etsi.txt?raw';
+import defisRaw from '../../content/defis.txt?raw';
+
+// Une ligne = une entrée. Lignes vides ignorées.
+function parseLines(raw: string): string[] {
+  return raw
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+// Blocs séparés par des titres "## Nom du thème".
+function parseThemedBlocks(raw: string): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+  let currentTheme: string | null = null;
+  for (const rawLine of raw.split('\n')) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (line.startsWith('##')) {
+      currentTheme = line.replace(/^##\s*/, '').trim();
+      result[currentTheme] = [];
+    } else if (currentTheme) {
+      result[currentTheme].push(line);
+    }
+  }
+  return result;
+}
+
 // ─── À deux (ex-Jeux) : 6 expériences ────────────────────────────────────
 export const DEFAULT_GAMES: Game[] = [
   {
@@ -47,16 +81,7 @@ export const DEFAULT_GAMES: Game[] = [
   },
 ];
 
-export const JE_PENSE_ITEMS = [
-  'un lieu',
-  'un objet du quotidien',
-  'une envie',
-  'un souvenir',
-  'une personne',
-  'un plat',
-  'un instant',
-  'un événement à venir',
-];
+export const JE_PENSE_ITEMS = parseLines(jePenseRaw);
 
 export const JE_PENSE_GUIDING_QUESTIONS = [
   "Est-ce qu'on l'a vécu ensemble ?",
@@ -66,240 +91,11 @@ export const JE_PENSE_GUIDING_QUESTIONS = [
   'Est-ce que je connais cette personne ?',
 ];
 
-export const QUI_CONNAIT_THEMES: Record<string, string[]> = {
-  Enfance: [
-    'Quel est mon souvenir d\u2019enfance préféré ?',
-    'Quel métier je voulais faire petit·e ?',
-    'Quel était mon jouet ou doudou préféré ?',
-    'Où est-ce que je passais mes vacances enfant ?',
-    'Quelle était ma matière préférée à l\u2019école ?',
-    'Quel était le surnom que mes parents me donnaient ?',
-    'De quoi j\u2019avais le plus peur enfant ?',
-    'Quel dessin animé ou film je regardais en boucle ?',
-    'Quelle bêtise je faisais souvent petit·e ?',
-    'Qui était mon meilleur ami d\u2019enfance ?',
-    'Quel était mon plat préféré étant enfant ?',
-    'Dans quelle maison ai-je grandi ?',
-    'Quel était mon anniversaire d\u2019enfance préféré ?',
-    'Quelle punition détestais-je le plus enfant ?',
-    'Qu\u2019est-ce qui me rendait fier·ère petit·e ?',
-    'Quel sport ou activité je pratiquais enfant ?',
-    'Quelle chanson me berçait enfant ?',
-    'Quel était mon rêve d\u2019enfant le plus fou ?',
-  ],
-  Famille: [
-    'Combien d\u2019enfants j\u2019aimerais avoir (ou pas) ?',
-    'Quel membre de ma famille m\u2019a le plus marqué·e ?',
-    'Quelle tradition familiale j\u2019aimerais garder ?',
-    'Quel est mon meilleur souvenir de fête de famille ?',
-    'Quelle valeur je veux absolument transmettre ?',
-    'Qui, dans ma famille, ressemble le plus à moi ?',
-    'Quel plat de famille me rappelle mon enfance ?',
-    'Quelle est la personne de ma famille que j\u2019admire le plus ?',
-    'Quel conflit familial m\u2019a le plus marqué·e ?',
-    'Quelle est ma relation avec mes frères et sœurs ?',
-    'Quel rôle je voudrais jouer en tant que parent ?',
-    'Quelle tradition familiale je ne veux surtout pas reproduire ?',
-    'Quel souvenir de mes grands-parents me touche le plus ?',
-    'Comment j\u2019imagine nos réunions de famille dans 10 ans ?',
-    'Quelle place je donne à ma belle-famille ?',
-  ],
-  Goûts: [
-    'Quel est mon film préféré ?',
-    'Quel est mon plat préféré ?',
-    'Quelle est ma saison préférée ?',
-    'Quel genre de musique je préfère ?',
-    'Quel est mon dessert préféré ?',
-    'Quelle est ma couleur préférée en ce moment ?',
-    'Quel livre ou auteur m\u2019a le plus marqué·e ?',
-    'Quel est mon restaurant préféré ?',
-    'Quelle boisson je commande toujours ?',
-    'Quel est mon style vestimentaire préféré ?',
-    'Quelle odeur j\u2019adore ?',
-    'Quel jeu ou sport j\u2019aime regarder ou pratiquer ?',
-    'Quel est mon animal préféré ?',
-    'Quelle ville j\u2019ai le plus aimée en voyage ?',
-    'Quel est mon petit plaisir coupable ?',
-  ],
-  Habitudes: [
-    'Qu\u2019est-ce que je fais toujours avant de dormir ?',
-    'Quel est mon petit rituel du matin ?',
-    'Qu\u2019est-ce qui m\u2019agace le plus au quotidien ?',
-    'Quel est mon plat réconfort ?',
-    'Qu\u2019est-ce que je fais quand je suis stressé·e ?',
-    'Quelle chanson j\u2019écoute en boucle en ce moment ?',
-    'Combien de temps je mets à me préparer le matin ?',
-    'Quelle est ma manie la plus étrange ?',
-    'Qu\u2019est-ce qui me met de bonne humeur instantanément ?',
-    'Quel est mon moment préféré de la journée ?',
-    'Comment je préfère me détendre après une journée difficile ?',
-    'Quelle habitude j\u2019aimerais changer chez moi ?',
-    'Qu\u2019est-ce que je fais toujours en premier en rentrant à la maison ?',
-    'Quel bruit ou geste m\u2019irrite le plus ?',
-  ],
-  Projets: [
-    'Quel est le prochain endroit où je veux voyager ?',
-    'Quel projet j\u2019aimerais réaliser dans les 5 prochaines années ?',
-    'Quelle compétence j\u2019aimerais apprendre ?',
-    'Quel changement j\u2019aimerais faire dans ma vie cette année ?',
-    'Où j\u2019imagine qu\u2019on sera dans 10 ans ?',
-    'Quel est un rêve que je n\u2019ai jamais osé dire tout haut ?',
-    'Quel projet professionnel me tient à cœur ?',
-    'Quelle formation ou étude j\u2019aimerais reprendre ?',
-    'Quel objectif financier j\u2019aimerais qu\u2019on atteigne ensemble ?',
-    'Quel projet créatif j\u2019aimerais lancer un jour ?',
-    'Qu\u2019est-ce que j\u2019aimerais accomplir avant mes 40 ans ?',
-    'Quel changement de carrière j\u2019envisage parfois ?',
-  ],
-  Voyages: [
-    'Quelle est ma destination de rêve ?',
-    'Quel a été mon voyage préféré jusqu\u2019ici ?',
-    'Préfère-je la montagne, la mer ou la ville en voyage ?',
-    'Quel pays j\u2019aimerais qu\u2019on visite ensemble en premier ?',
-    'Quel type de voyage je préfère : farniente ou aventure ?',
-    'Quel a été mon pire souvenir de voyage ?',
-    'Est-ce que je préfère organiser le voyage ou me laisser surprendre ?',
-    'Quelle spécialité culinaire j\u2019aimerais goûter à l\u2019étranger ?',
-    'Quel moyen de transport je préfère pour voyager ?',
-    'Quel souvenir de voyage je garde précieusement ?',
-    'Où aimerais-je passer notre prochain anniversaire de couple ?',
-    'Quel voyage improvisé aimerais-je qu\u2019on fasse ?',
-  ],
-  Couple: [
-    'Quel a été notre premier vrai fou rire ensemble ?',
-    'Quel est mon souvenir préféré de nous deux ?',
-    'Qu\u2019est-ce que je trouve le plus rassurant chez toi ?',
-    'Quelle petite attention te touche le plus ?',
-    'Quel a été notre plus beau voyage à deux ?',
-    'Quel geste du quotidien me fait sentir aimé·e ?',
-    'Quel a été le moment où j\u2019ai su que c\u2019était toi ?',
-    'Quelle est notre plus belle dispute (celle qui nous a fait grandir) ?',
-    'Quel surnom j\u2019aime que tu me donnes ?',
-    'Quelle habitude de couple j\u2019adore chez nous ?',
-    'Quel est notre rituel préféré à deux ?',
-    'Qu\u2019est-ce qui m\u2019a le plus surpris·e en te connaissant ?',
-    'Quelle qualité chez toi j\u2019admire le plus ?',
-    'Quel est notre lieu préféré à tous les deux ?',
-    'Quelle chanson représente le mieux notre histoire ?',
-  ],
-  Souvenirs: [
-    'Quel est le souvenir le plus drôle qu\u2019on partage ?',
-    'Quel est le souvenir le plus émouvant qu\u2019on partage ?',
-    'Quel souvenir aimerais-je revivre exactement pareil ?',
-    'Quel a été notre meilleur Noël ou fête ensemble ?',
-    'Quel souvenir d\u2019enfance j\u2019aimerais te faire vivre ?',
-    'Quel est le souvenir le plus fou qu\u2019on ait vécu ?',
-    'Quel petit moment banal est devenu un grand souvenir pour moi ?',
-    'Quel souvenir me manque le plus de nos débuts ?',
-    'Quel a été notre meilleur repas ensemble ?',
-    'Quel souvenir de vacances je referais sans hésiter ?',
-  ],
-  Rêves: [
-    'Quel serait mon métier de rêve, sans contrainte ?',
-    'Où j\u2019aimerais vivre un jour ?',
-    'Quel serait mon voyage de rêve ?',
-    'Quelle est une chose folle que j\u2019aimerais faire une fois dans ma vie ?',
-    'Quel super-pouvoir je choisirais ?',
-    'À quoi ressemble ma journée idéale ?',
-    'Quelle maison de rêve j\u2019imagine pour nous ?',
-    'Quel talent j\u2019aimerais avoir ?',
-    'Quel est mon rêve le plus fou jamais avoué ?',
-    'Si l\u2019argent n\u2019était pas un problème, que ferais-je de mes journées ?',
-    'Quel exploit personnel aimerais-je réaliser un jour ?',
-  ],
-  Spiritualité: [
-    'Qu\u2019est-ce qui me donne un sentiment de paix ?',
-    'Quel moment m\u2019a rapproché·e le plus de mes convictions ?',
-    'Pour quoi suis-je le plus reconnaissant·e en ce moment ?',
-    'Qu\u2019est-ce que je trouve sacré dans notre relation ?',
-    'Quelle est une chose pour laquelle j\u2019aimerais prier ou méditer plus souvent ?',
-    'Qu\u2019est-ce qui donne du sens à mes journées ?',
-    'Quel verset, texte ou pensée m\u2019accompagne souvent ?',
-    'Comment j\u2019aimerais qu\u2019on vive notre foi à deux ?',
-    'Quel moment de silence ou de recueillement me marque le plus ?',
-    'Qu\u2019est-ce que je souhaite pour notre vie spirituelle de couple ?',
-  ],
-  Valeurs: [
-    'Quelle valeur est la plus importante pour moi dans un couple ?',
-    'Qu\u2019est-ce que je ne tolérerais jamais dans une relation ?',
-    'Quelle qualité j\u2019admire le plus chez une personne ?',
-    'Comment je définis la loyauté ?',
-    'Qu\u2019est-ce que le respect signifie pour moi au quotidien ?',
-    'Quelle valeur j\u2019aimerais transmettre à nos enfants ?',
-    'Qu\u2019est-ce qui compte le plus pour moi : la sécurité ou la liberté ?',
-    'Comment je gère un désaccord de valeurs avec quelqu\u2019un que j\u2019aime ?',
-    'Quelle cause me tient particulièrement à cœur ?',
-  ],
-  'Futur foyer': [
-    'Comment j\u2019imagine notre maison idéale ?',
-    'Quelle ambiance j\u2019aimerais dans notre futur salon ?',
-    'Qui s\u2019occupe de quoi dans notre organisation actuelle ou future ?',
-    'Quel animal de compagnie j\u2019aimerais qu\u2019on ait ?',
-    'Quelle ville ou région j\u2019imagine pour notre vie de famille ?',
-    'Quelles habitudes du quotidien j\u2019aimerais qu\u2019on garde toujours ?',
-    'Comment j\u2019imagine nos matins dans dix ans ?',
-    'Quel type de décoration j\u2019aimerais chez nous ?',
-    'Quelle tradition j\u2019aimerais qu\u2019on crée rien qu\u2019à nous ?',
-  ],
-  Mariage: [
-    'Quel moment du mariage j\u2019attends le plus ?',
-    'Quel type de cérémonie j\u2019imagine pour nous ?',
-    'Quelle chanson j\u2019aimerais pour notre première danse ?',
-    'Quel souvenir de mariage (le nôtre ou celui d\u2019un proche) m\u2019a le plus marqué·e ?',
-    'Quelle tradition de mariage j\u2019aimerais garder ou inventer ?',
-    'Comment j\u2019imagine notre lune de miel ?',
-    'Quel serait le lieu de mariage de mes rêves ?',
-    'Quelle promesse j\u2019ai le plus envie de te faire ?',
-  ],
-};
+export const QUI_CONNAIT_THEMES: Record<string, string[]> = parseThemedBlocks(questionsRaw);
 
-export const ET_SI_QUESTIONS = [
-  'Et si on pouvait vivre un an n\u2019importe où dans le monde, où irait-on ?',
-  'Et si on devait tout recommencer, qu\u2019est-ce qu\u2019on garderait absolument ?',
-  'Et si on gagnait un an sans travailler, qu\u2019est-ce qu\u2019on ferait ?',
-  'Et si on devait écrire un livre sur notre histoire, quel serait le titre ?',
-  'Et si on pouvait revivre une seule journée ensemble, laquelle ?',
-  'Et si on devait offrir un cadeau à notre "nous" d\u2019il y a 5 ans, ce serait quoi ?',
-  'Et si on n\u2019avait plus jamais accès à nos téléphones un week-end entier, on ferait quoi ?',
-  'Et si on devait choisir une seule chanson pour représenter notre couple ?',
-  'Et si on pouvait inviter n\u2019importe qui à dîner, qui choisirait-on ?',
-  'Et si on devait déménager demain, qu\u2019est-ce qu\u2019on emporterait en premier ?',
-  'Et si on créait une tradition rien qu\u2019à nous, ce serait quoi ?',
-  'Et si on pouvait donner un conseil à notre "nous" du début de la relation ?',
-];
+export const ET_SI_QUESTIONS = parseLines(etSiRaw);
 
-export const DEFIS = [
-  'Se prendre en photo tous les deux, n\u2019importe où, maintenant.',
-  'Se raconter un souvenir que l\u2019autre ne connaît pas encore.',
-  'S\u2019écrire un mot doux à laisser quelque part pour l\u2019autre.',
-  'Cuisiner un plat du pays d\u2019origine de l\u2019un de vous deux.',
-  'Passer 10 minutes sans téléphone, juste à se parler.',
-  'Refaire une activité de vos débuts.',
-  'Complimenter l\u2019autre sur trois choses précises, là maintenant.',
-  'Planifier une sortie surprise pour la semaine.',
-  'Écouter la chanson qui vous rappelle vos débuts.',
-  'Se masser les mains ou les épaules cinq minutes.',
-  'Regarder ensemble vos toutes premières photos de couple.',
-  'Écrire chacun trois mots qui décrivent votre couple, puis comparer.',
-  'Relire un ancien Instant ensemble.',
-  'Écrire trois qualités de l\u2019autre, à voix haute.',
-  'Recréer une photo de vos débuts, aujourd\u2019hui.',
-  'Marcher ensemble sans téléphone, dix minutes.',
-  'Préparer quelque chose à manger ensemble, sans recette.',
-  'Prier l\u2019un pour l\u2019autre, à voix haute ou en silence.',
-  'Se raconter le rêve le plus étrange dont vous vous souvenez.',
-  'Choisir chacun une chanson qui décrit l\u2019autre.',
-  'Écrire une lettre à ouvrir dans un an.',
-  'Se remémorer votre tout premier rendez-vous, dans le détail.',
-  'Faire un compliment sincère à l\u2019autre sur un progrès récent.',
-  'Choisir une photo au hasard dans vos Instants et raconter ce jour-là.',
-  'Se donner rendez-vous dans la semaine pour une sortie surprise.',
-  'Se dire un souvenir qui vous fait encore rire aujourd\u2019hui.',
-  'Préparer le petit-déjeuner de l\u2019autre demain matin, en silence.',
-  'Se raconter ce que vous espérez pour l\u2019année prochaine.',
-  'Se tenir la main en silence pendant deux minutes, les yeux fermés.',
-  'Écrire ensemble trois mots qui résument votre semaine.',
-];
+export const DEFIS = parseLines(defisRaw);
 
 // Conservé pour compatibilité (utilisé comme secours dans le modal de jeu)
 export const GAME_PROMPTS: Record<string, string[]> = {

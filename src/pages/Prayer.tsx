@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Check, Archive, Pencil } from 'lucide-react';
+import { Plus, Trash2, Check, Archive, Pencil, MoreVertical } from 'lucide-react';
 import { usePrayerStore } from '../stores/prayerStore';
 import { Card, Button, Modal, Divider, ErrorBanner, Spinner, ActionSheet, LongPressWrapper } from '../components/UI';
 import { PrayerTopic } from '../types';
@@ -22,7 +22,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => {
-  const { topics, loading, error, loadTopics, addToPortTopic, addRecognitionTopic, markAnswered, updateTitle, deleteTopic } =
+  const { topics, loading, error, loadTopics, addToPortTopic, addRecognitionTopic, markAnswered, updateTitle, archiveNow, deleteTopic } =
     usePrayerStore();
 
   useEffect(() => {
@@ -131,6 +131,9 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
                     <LongPressWrapper onLongPress={() => setActionTopic(topic)}>
                       <p style={{ flex: 1, fontSize: 14, margin: 0, color: T.ink }}>{topic.title}</p>
                     </LongPressWrapper>
+                    <button onClick={() => setActionTopic(topic)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }} title="Plus d'actions">
+                      <MoreVertical size={16} color={T.muted} />
+                    </button>
                   </Card>
                 ))}
               </div>
@@ -149,6 +152,9 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
                     <LongPressWrapper onLongPress={() => setActionTopic(topic)}>
                       <p style={{ flex: 1, fontSize: 14, margin: 0, color: T.ink }}>{topic.title}</p>
                     </LongPressWrapper>
+                    <button onClick={() => setActionTopic(topic)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, flexShrink: 0 }} title="Plus d'actions">
+                      <MoreVertical size={16} color={T.muted} />
+                    </button>
                   </Card>
                 ))}
               </div>
@@ -180,6 +186,9 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
           actionTopic
             ? [
                 { key: 'edit', icon: <Pencil size={16} />, label: 'Modifier', onClick: () => openEdit(actionTopic) },
+                ...(actionTopic.category === 'recognition'
+                  ? [{ key: 'archive', icon: <Archive size={16} />, label: 'Archiver maintenant', onClick: () => archiveNow(actionTopic.id) }]
+                  : []),
                 { key: 'delete', icon: <Trash2 size={16} color="#C0392B" />, label: 'Supprimer', danger: true, onClick: () => deleteTopic(actionTopic.id) },
               ]
             : []

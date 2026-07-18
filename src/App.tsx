@@ -8,6 +8,7 @@ import { usePrayerStore } from './stores/prayerStore';
 import { useCollectionStore } from './stores/collectionStore';
 import { useCustomContentStore } from './stores/customContentStore';
 import { HomePage } from './pages/Home';
+import { ColorEditor } from './pages/ColorEditor';
 const InstantsPage = React.lazy(() => import('./pages/Instants').then((m) => ({ default: m.InstantsPage })));
 const AdeuxPage = React.lazy(() => import('./pages/Adeux').then((m) => ({ default: m.AdeuxPage })));
 const EnviesPage = React.lazy(() => import('./pages/Envies').then((m) => ({ default: m.EnviesPage })));
@@ -15,9 +16,10 @@ const PrayerPage = React.lazy(() => import('./pages/Prayer').then((m) => ({ defa
 import { Button, Modal, ErrorBanner, Spinner } from './components/UI';
 import { DEFAULT_GAMES } from './services/adeuxContent';
 import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
-import { compressPhoto } from './services/photoService';
+import { compressPhoto, extractPhotoMetadata, reverseGeocodeCity } from './services/photoService';
 import { BucketItem, PrayerTopic, Memory } from './types';
 import { T, CONTEXT, SOURCE_COLORS, SOURCE_LABELS, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
+import { applyStoredOverrides } from './services/colorOverrides';
 
 type Source = 'manual' | 'game' | 'bucket' | 'prayer';
 type Tab = 'sofa' | 'instants' | 'adeux' | 'envies' | 'priere';
@@ -72,9 +74,11 @@ function AppContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showColorEditor, setShowColorEditor] = useState(false);
 
   useEffect(() => {
     applyTheme(theme);
+    applyStoredOverrides();
   }, [theme]);
 
   const cycleTheme = () => {
@@ -129,6 +133,8 @@ function AppContent() {
     setShowCreateMemory(true);
   };
 
+  const [locatingPhoto, setLocatingPhoto] = useState(false);
+
   const handlePhotoSelect = (file: File | null) => {
     setDraftPhotoFile(file);
     setRemovePhoto(file === null);
@@ -136,6 +142,19 @@ function AppContent() {
       const reader = new FileReader();
       reader.onload = () => setDraftPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
+
+      // Préremplissage depuis les métadonnées EXIF (date + lieu), sans
+      // bloquer l'UI ; l'utilisateur peut toujours corriger ensuite.
+      setLocatingPhoto(true);
+      extractPhotoMetadata(file)
+        .then(async (meta) => {
+          if (meta.date) setDraftDate(meta.date.slice(0, 10));
+          if (meta.latitude != null && meta.longitude != null) {
+            const city = await reverseGeocodeCity(meta.latitude, meta.longitude);
+            if (city) setDraftLocation(city);
+          }
+        })
+        .finally(() => setLocatingPhoto(false));
     } else {
       setDraftPhotoPreview(null);
     }
@@ -244,7 +263,7 @@ function AppContent() {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {tab === 'sofa' && (
-          <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} />
+          <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} onOpenColorEditor={() => setShowColorEditor(true)} />
         )}
         <React.Suspense fallback={<Spinner />}>
           {tab === 'instants' && <InstantsPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
@@ -403,7 +422,7 @@ function AppContent() {
             />
             <input
               type="text"
-              placeholder="Lieu (optionnel)"
+              placeholder={locatingPhoto ? 'Détection du lieu...' : 'Lieu (optionnel)'}
               value={draftLocation}
               onChange={(e) => setDraftLocation(e.target.value)}
               list="known-locations"
@@ -436,6 +455,7 @@ function AppContent() {
           </div>
         </div>
       </Modal>
+      {showColorEditor && <ColorEditor theme={theme} onClose={() => setShowColorEditor(false)} />}
     </div>
   );
 }

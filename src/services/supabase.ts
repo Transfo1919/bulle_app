@@ -97,13 +97,13 @@ export async function permanentlyDeleteMemory(id: string) {
 
 export async function uploadPhoto(file: File, path: string) {
   const { data, error } = await supabase.storage
-    .from('photos')
+    .from('photo_moment')
     .upload(path, file);
   
   if (error) throw error;
   
   const { data: publicUrl } = supabase.storage
-    .from('photos')
+    .from('photo_moment')
     .getPublicUrl(data.path);
   
   return publicUrl.publicUrl;
