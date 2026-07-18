@@ -59,3 +59,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.25s ease-out, color 0.25s ease-out;
 }
+
+/* iOS Safari zoome automatiquement (et dézoome mal) sur tout champ de
+   saisie affiché à moins de 16px. On force ce minimum partout, quel
+   que soit le style défini par ailleurs, pour éviter ce comportement
+   gênant sur mobile. */
+input, select, textarea {
+  font-size: 16px !important;
+}

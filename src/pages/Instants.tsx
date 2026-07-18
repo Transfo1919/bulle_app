@@ -44,6 +44,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
   const [collectionFilter, setCollectionFilter] = useState<string | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedFlash, setCopiedFlash] = useState(false);
 
@@ -90,6 +91,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
     return base.filter((m) => {
       if (searchTerm && !m.text.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       if (collectionFilter && !(m.collection_ids || []).includes(collectionFilter)) return false;
+      if (locationFilter && m.location !== locationFilter) return false;
       if (dateFrom && new Date(m.date) < new Date(dateFrom)) return false;
       if (dateTo && new Date(m.date) > new Date(`${dateTo}T23:59:59`)) return false;
       switch (sourceFilter) {
@@ -102,7 +104,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
         default: return true;
       }
     });
-  }, [viewMode, memories, searchTerm, sourceFilter, collectionFilter, dateFrom, dateTo]);
+  }, [viewMode, memories, searchTerm, sourceFilter, collectionFilter, locationFilter, dateFrom, dateTo]);
 
   const FILTERS: { id: SourceFilter; label: string }[] = [
     { id: 'tous', label: 'Tous' },
@@ -221,17 +223,25 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
           )}
 
           {locations.length > 0 && (
-            <div style={{ display: 'flex', gap: 8, overflow: 'auto', paddingBottom: 4 }}>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              style={{
+                border: `1px solid ${locationFilter ? CONTEXT.instants : T.border}`,
+                borderRadius: 20,
+                padding: '6px 12px',
+                fontFamily: T.font,
+                fontSize: 12.5,
+                color: locationFilter ? CONTEXT.instants : T.muted,
+                background: T.surface,
+                alignSelf: 'flex-start',
+              }}
+            >
+              <option value="">📍 Tous les lieux</option>
               {locations.map((loc) => (
-                <button
-                  key={loc}
-                  onClick={() => setSearchTerm(loc)}
-                  style={{ fontSize: 11.5, color: T.muted, background: T.paper2, border: 'none', borderRadius: 20, padding: '4px 10px', cursor: 'pointer', fontFamily: T.font }}
-                >
-                  📍 {loc}
-                </button>
+                <option key={loc} value={loc}>{loc}</option>
               ))}
-            </div>
+            </select>
           )}
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

@@ -37,6 +37,15 @@ export async function updatePrayerTopicTitle(id: string, title: string): Promise
   return updatePrayerTopicRemote(id, { title });
 }
 
+// Archive manuelle immédiate (au lieu d'attendre les 30 jours) : on
+// recule simplement la date d'entrée en reconnaissance de 31 jours,
+// pour réutiliser la même logique d'archivage sans champ supplémentaire.
+export async function archiveTopicNow(id: string): Promise<PrayerTopic> {
+  const past = new Date();
+  past.setDate(past.getDate() - 31);
+  return updatePrayerTopicRemote(id, { answered_at: past.toISOString() });
+}
+
 export async function deletePrayerTopic(id: string): Promise<void> {
   return deletePrayerTopicRemote(id);
 }

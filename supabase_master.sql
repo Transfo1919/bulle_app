@@ -134,4 +134,23 @@ alter table custom_defis disable row level security;
 
 -- ─── 8. Stockage ────────────────────────────────────────────────────
 -- Un bucket "photo_moment" (public) doit exister pour l'upload de photos.
--- Se crée manuellement dans Supabase → Storage → New bucket.
+-- La RLS du stockage (table storage.objects) est séparée de celle des
+-- tables de l'app : même un bucket "public" bloque les uploads sans
+-- politique explicite. On l'autorise ici, uniquement pour ce bucket.
+do $$
+begin
+  begin
+    create policy "Allow public uploads to photo_moment"
+    on storage.objects for insert
+    to anon
+    with check (bucket_id = 'photo_moment');
+  exception when duplicate_object then null;
+  end;
+  begin
+    create policy "Allow public read from photo_moment"
+    on storage.objects for select
+    to anon
+    using (bucket_id = 'photo_moment');
+  exception when duplicate_object then null;
+  end;
+end $$;

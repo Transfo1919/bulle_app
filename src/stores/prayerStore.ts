@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { PrayerTopic } from '../types';
-import { getPrayerTopics, createPrayerTopic, markPrayerAnswered, updatePrayerTopicTitle, deletePrayerTopic } from '../services/prayerService';
+import { getPrayerTopics, createPrayerTopic, markPrayerAnswered, updatePrayerTopicTitle, archiveTopicNow, deletePrayerTopic } from '../services/prayerService';
 
 interface PrayerStore {
   topics: PrayerTopic[];
@@ -12,6 +12,7 @@ interface PrayerStore {
   addRecognitionTopic: (title: string) => Promise<void>;
   markAnswered: (id: string) => Promise<void>;
   updateTitle: (id: string, title: string) => Promise<void>;
+  archiveNow: (id: string) => Promise<void>;
   deleteTopic: (id: string) => Promise<void>;
 }
 
@@ -78,6 +79,17 @@ export const usePrayerStore = create<PrayerStore>((set, get) => ({
       set((state) => ({ topics: state.topics.map((t) => (t.id === id ? saved : t)) }));
     } catch (e: any) {
       set({ topics: previous, error: e.message || 'Erreur lors de la modification' });
+      throw e;
+    }
+  },
+
+  archiveNow: async (id) => {
+    const previous = get().topics;
+    try {
+      const saved = await archiveTopicNow(id);
+      set((state) => ({ topics: state.topics.map((t) => (t.id === id ? saved : t)) }));
+    } catch (e: any) {
+      set({ topics: previous, error: e.message || "Erreur lors de l'archivage" });
       throw e;
     }
   },
