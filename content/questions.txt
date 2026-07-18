@@ -12,7 +12,6 @@ Qui était mon meilleur ami d’enfance ?
 Quel était mon plat préféré étant enfant ?
 Dans quelle maison ai-je grandi ?
 Quel était mon anniversaire d’enfance préféré ?
-Quelle punition détestais-je le plus enfant ?
 Qu’est-ce qui me rendait fier·ère petit·e ?
 Quel sport ou activité je pratiquais enfant ?
 Quelle chanson me berçait enfant ?
@@ -162,7 +161,6 @@ Comment je gère un désaccord de valeurs avec quelqu’un que j’aime ?
 Quelle cause me tient particulièrement à cœur ?
 
 ## Futur foyer
-Futur foyer
 Comment j’imagine notre maison idéale ?
 Quelle ambiance j’aimerais dans notre futur salon ?
 Qui s’occupe de quoi dans notre organisation actuelle ou future ?

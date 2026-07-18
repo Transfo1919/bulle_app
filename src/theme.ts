@@ -18,6 +18,19 @@ export const CONTEXT = {
   instants: '#9C978A', // neutre
 };
 
+<<<<<<< Updated upstream
+=======
+// Valeurs par défaut (utilisées par l'éditeur de couleurs pour l'état
+// initial et le bouton "Réinitialiser").
+export const DEFAULT_CONTEXT_COLORS = {
+  adeux: '#4F6D7A',
+  priere: '#7C9687',
+  envies: '#D9A441',
+  instants: '#8A748C',
+};
+export const DEFAULT_RADIUS = { radius: 17, radiusMd: 17, radiusSm: 32 };
+
+>>>>>>> Stashed changes
 export type ThemeName = 'papier' | 'sauge' | 'nuit' | 'douceur';
 export const THEME_ORDER: ThemeName[] = ['papier', 'sauge', 'nuit', 'douceur'];
 export const THEME_LABELS: Record<ThemeName, string> = {

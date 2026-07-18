@@ -53,7 +53,7 @@ export const DEFAULT_GAMES: Game[] = [
   },
   {
     id: 'qui-connait-mieux',
-    name: 'Qui connaît le mieux ?',
+    name: 'À propos de toi',
     description: 'Une question, deux réponses en secret, puis on compare.',
     icon: 'Users',
     enabled: true,

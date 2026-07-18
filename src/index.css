@@ -58,6 +58,19 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.25s ease-out, color 0.25s ease-out;
+<<<<<<< Updated upstream
+=======
+
+  /* Couleurs de modules et rayons — partagés par tous les thèmes,
+     pilotables en direct par l'éditeur de couleurs. */
+  --radius: 17px;
+  --radius-md: 17px;
+  --radius-sm: 32px;
+  --context-adeux: #4F6D7A;
+  --context-envies: #D9A441;
+  --context-priere: #7C9687;
+  --context-instants: #8A748C;
+>>>>>>> Stashed changes
 }
 
 /* iOS Safari zoome automatiquement (et dézoome mal) sur tout champ de

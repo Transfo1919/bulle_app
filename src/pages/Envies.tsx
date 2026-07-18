@@ -3,7 +3,7 @@ import { Plus, Check, Trash2, Pencil, Image as ImageIcon } from 'lucide-react';
 import { useBucketStore } from '../stores/bucketStore';
 import { useMemoryStore } from '../stores/memoryStore';
 import { Card, Button, Modal, ErrorBanner, Spinner, ActionSheet, LongPressWrapper } from '../components/UI';
-import { BucketItem } from '../types';
+import { BucketItem, Memory } from '../types';
 import { T, CONTEXT } from '../theme';
 
 interface EnviesPageProps {
@@ -28,6 +28,7 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
   const [newTiming, setNewTiming] = useState<'ce_soir' | 'plus_tard'>('plus_tard');
   const [showAdd, setShowAdd] = useState(false);
   const [actionItem, setActionItem] = useState<BucketItem | null>(null);
+  const [viewingMemory, setViewingMemory] = useState<Memory | null>(null);
   const [editItem, setEditItem] = useState<BucketItem | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
@@ -124,7 +125,14 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
                         <p style={{ flex: 1, fontSize: 14, margin: 0, textDecoration: 'line-through', color: T.ink }}>{item.title}</p>
                       </div>
                       {linkedMemory ? (
+<<<<<<< Updated upstream
                         <div style={{ display: 'flex', gap: 10, alignItems: 'center', background: T.paper2, borderRadius: T.radius - 4, padding: 10, marginTop: 10 }}>
+=======
+                        <div
+                          onClick={() => setViewingMemory(linkedMemory)}
+                          style={{ display: 'flex', gap: 10, alignItems: 'center', background: T.paper2, borderRadius: T.radiusSm, padding: 10, marginTop: 10, cursor: 'pointer' }}
+                        >
+>>>>>>> Stashed changes
                           {linkedMemory.photo_url ? (
                             <img src={linkedMemory.photo_url} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
                           ) : (
@@ -178,6 +186,23 @@ export const EnviesPage: React.FC<EnviesPageProps> = ({ onCreateMemoryFor }) => 
             <Button full onClick={handleSaveEdit} style={{ background: CONTEXT.envies }}>Enregistrer</Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal isOpen={!!viewingMemory} onClose={() => setViewingMemory(null)} title="Instant">
+        {viewingMemory && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {viewingMemory.photo_url && (
+              <img src={viewingMemory.photo_url} alt="" style={{ width: '100%', maxHeight: 280, borderRadius: T.radius, objectFit: 'cover' }} />
+            )}
+            <p style={{ fontSize: 12, color: T.muted, margin: 0 }}>
+              {viewingMemory.poetic || new Date(viewingMemory.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <p style={{ fontSize: 16, fontWeight: 500, margin: 0, lineHeight: 1.5, color: T.ink }}>{viewingMemory.text}</p>
+            {viewingMemory.location && (
+              <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>📍 {viewingMemory.location}</p>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );

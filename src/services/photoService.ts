@@ -11,7 +11,10 @@ export interface PhotoMetadata {
 export async function extractPhotoMetadata(file: File): Promise<PhotoMetadata> {
   try {
     const exifr = await import('exifr');
-    const tags = await exifr.parse(file, { gps: true, pick: ['DateTimeOriginal', 'CreateDate', 'latitude', 'longitude'] });
+    // Important : ne pas combiner "pick" avec "gps" — latitude/longitude
+    // sont des propriétés calculées par exifr (pas des tags EXIF bruts),
+    // et "pick" les filtrait avant qu'elles ne soient calculées.
+    const tags = await exifr.parse(file, { gps: true });
     if (!tags) return {};
     const rawDate: Date | undefined = tags.DateTimeOriginal || tags.CreateDate;
     return {
@@ -41,9 +44,18 @@ export async function reverseGeocodeCity(latitude: number, longitude: number): P
     return undefined;
   }
 }
+
+// Compresse une photo côté client avant envoi : largeur max ~1920px,
 // format WebP, qualité 80-85 %. ⚠️ Le bucket Supabase "photo_moment"
 // doit autoriser le type MIME "image/webp" (Storage → bucket → Edit →
 // Allowed MIME types), sinon l'upload échouera.
+//
+// Effet de bord volontaire : passer par un <canvas> pour redessiner
+// l'image supprime TOUTES les métadonnées EXIF (le Canvas API ne les
+// préserve jamais). La photo envoyée à Supabase ne contient donc plus
+// ni GPS, ni date, ni aucune autre métadonnée d'origine — même si ces
+// informations ont été lues juste avant (extractPhotoMetadata) pour
+// préremplir la date et le lieu de l'instant.
 const MAX_WIDTH = 1920;
 const QUALITY = 0.82;
 

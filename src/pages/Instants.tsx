@@ -83,10 +83,17 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
   );
 
   const filtered = useMemo(() => {
+    // Repli sur created_at si "date" est absente ou invalide, pour éviter
+    // un tri instable (NaN) qui laissait certains instants "collés" en haut.
+    const safeDate = (m: Memory) => {
+      const d = new Date(m.date);
+      return isNaN(d.getTime()) ? new Date(m.created_at).getTime() : d.getTime();
+    };
+
     let base =
       viewMode === 'recents'
         ? [...memories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        : [...memories].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        : [...memories].sort((a, b) => safeDate(a) - safeDate(b));
 
     return base.filter((m) => {
       if (searchTerm && !m.text.toLowerCase().includes(searchTerm.toLowerCase())) return false;
@@ -150,9 +157,22 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
       {storeError && <ErrorBanner message={storeError} />}
       {loading && memories.length === 0 && <Spinner label="Chargement des instants..." />}
 
-      <div style={{ display: 'flex', gap: 6 }}>
-        <ModeButton active={topMode === 'decouvrir'} icon={<DiscoverIcon size={14} />} label="Découvrir" onClick={openDiscover} />
-        <ModeButton active={topMode === 'bibliotheque'} icon={<Library size={14} />} label="Bibliothèque" onClick={() => setTopMode('bibliotheque')} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <ModeButton active={topMode === 'decouvrir'} icon={<DiscoverIcon size={14} />} label="Découvrir" onClick={openDiscover} />
+          <ModeButton active={topMode === 'bibliotheque'} icon={<Library size={14} />} label="Histoire" onClick={() => setTopMode('bibliotheque')} />
+        </div>
+        <button
+          onClick={onCreateClick}
+          title="Créer un instant"
+          style={{
+            width: 32, height: 32, borderRadius: '50%', border: 'none',
+            background: CONTEXT.instants, color: '#fff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}
+        >
+          <Plus size={18} />
+        </button>
       </div>
 
       {topMode === 'decouvrir' ? (
@@ -198,7 +218,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
 
           <div style={{ display: 'flex', gap: 6 }}>
             <ModeButton active={viewMode === 'recents'} icon={<Clock size={14} />} label="Plus récents" onClick={() => setViewMode('recents')} />
-            <ModeButton active={viewMode === 'chrono'} icon={<CalendarDays size={14} />} label="Chronologique" onClick={() => setViewMode('chrono')} />
+            <ModeButton active={viewMode === 'chrono'} icon={<CalendarDays size={14} />} label="Depuis le début" onClick={() => setViewMode('chrono')} />
           </div>
 
           <div style={{ display: 'flex', gap: 8, overflow: 'auto', paddingBottom: 4 }}>
@@ -311,11 +331,6 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
           )}
         </>
       )}
-
-      <Button full onClick={onCreateClick}>
-        <Plus size={16} style={{ marginRight: 8 }} />
-        Créer un instant
-      </Button>
 
       <button
         onClick={openTrash}

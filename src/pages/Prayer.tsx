@@ -92,7 +92,7 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
         <Card style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <Button size="sm" variant={category === 'toport' ? 'primary' : 'ghost'} onClick={() => setCategory('toport')} style={category === 'toport' ? { background: CONTEXT.priere } : {}}>
-              En cours
+              Entre ses mains
             </Button>
             <Button size="sm" variant={category === 'recognition' ? 'primary' : 'ghost'} onClick={() => setCategory('recognition')} style={category === 'recognition' ? { background: CONTEXT.priere } : {}}>
               Reconnaissance
@@ -117,7 +117,7 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
         <>
           {enCoursTopics.length > 0 && (
             <div>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: T.muted, margin: '0 0 12px 0' }}>En cours</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: T.muted, margin: '0 0 12px 0' }}>Entre ses mains</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {enCoursTopics.map((topic) => (
                   <Card key={topic.id} onContextMenu={(e) => { e.preventDefault(); setActionTopic(topic); }} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -210,7 +210,7 @@ export const PrayerPage: React.FC<PrayerPageProps> = ({ onCreateMemoryFor }) => 
           {selectedTopics.map((topic) => (
             <div key={topic.id}>
               <p style={{ fontSize: 11, color: T.muted, margin: '0 0 2px 0', textTransform: 'uppercase' }}>
-                {topic.category === 'toport' ? 'En cours' : 'Reconnaissance'}
+                {topic.category === 'toport' ? 'Entre ses mains' : 'Reconnaissance'}
               </p>
               <p style={{ fontSize: 14, fontWeight: 500, margin: 0, color: T.ink }}>{topic.title}</p>
               {topic.description && <p style={{ fontSize: 12, color: T.muted, margin: '4px 0 0 0' }}>{topic.description}</p>}
