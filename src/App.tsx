@@ -8,6 +8,7 @@ import { usePrayerStore } from './stores/prayerStore';
 import { useCollectionStore } from './stores/collectionStore';
 import { useCustomContentStore } from './stores/customContentStore';
 import { HomePage } from './pages/Home';
+import { ColorEditor } from './pages/ColorEditor';
 const InstantsPage = React.lazy(() => import('./pages/Instants').then((m) => ({ default: m.InstantsPage })));
 const AdeuxPage = React.lazy(() => import('./pages/Adeux').then((m) => ({ default: m.AdeuxPage })));
 const EnviesPage = React.lazy(() => import('./pages/Envies').then((m) => ({ default: m.EnviesPage })));
@@ -18,6 +19,7 @@ import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
 import { compressPhoto, extractPhotoMetadata, reverseGeocodeCity } from './services/photoService';
 import { BucketItem, PrayerTopic, Memory } from './types';
 import { T, CONTEXT, SOURCE_COLORS, SOURCE_LABELS, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
+import { applyStoredOverrides } from './services/colorOverrides';
 
 type Source = 'manual' | 'game' | 'bucket' | 'prayer';
 type Tab = 'sofa' | 'instants' | 'adeux' | 'envies' | 'priere';
@@ -72,9 +74,11 @@ function AppContent() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [showColorEditor, setShowColorEditor] = useState(false);
 
   useEffect(() => {
     applyTheme(theme);
+    applyStoredOverrides();
   }, [theme]);
 
   const cycleTheme = () => {
@@ -259,7 +263,7 @@ function AppContent() {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {tab === 'sofa' && (
-          <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} />
+          <HomePage onNavigate={(t) => setTab(t as Tab)} theme={theme} onCycleTheme={cycleTheme} onOpenColorEditor={() => setShowColorEditor(true)} />
         )}
         <React.Suspense fallback={<Spinner />}>
           {tab === 'instants' && <InstantsPage onCreateClick={() => openCreateMemory()} onEditClick={openEditMemory} />}
@@ -451,6 +455,7 @@ function AppContent() {
           </div>
         </div>
       </Modal>
+      {showColorEditor && <ColorEditor theme={theme} onClose={() => setShowColorEditor(false)} />}
     </div>
   );
 }

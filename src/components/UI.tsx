@@ -190,7 +190,7 @@ export const Toast: React.FC<{
         zIndex: 200,
         background: '#2B2B2B',
         color: '#F5F1EA',
-        borderRadius: T.radius - 6,
+        borderRadius: T.radiusMd,
         padding: '12px 16px',
         display: 'flex',
         alignItems: 'center',

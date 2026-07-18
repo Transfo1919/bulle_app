@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { Image, Users, Sparkles, HandHeart, Palette } from 'lucide-react';
 import { useMemoryStore } from '../stores/memoryStore';
 import { useBucketStore } from '../stores/bucketStore';
@@ -10,6 +10,7 @@ interface HomeProps {
   onNavigate: (tab: string) => void;
   theme: ThemeName;
   onCycleTheme: () => void;
+  onOpenColorEditor: () => void;
 }
 
 const REDECOUVERTE_LINES = [
@@ -28,11 +29,12 @@ function getGreeting(): string {
   return 'On ne dort pas ?';
 }
 
-export const HomePage: React.FC<HomeProps> = ({ onNavigate, theme, onCycleTheme }) => {
+export const HomePage: React.FC<HomeProps> = ({ onNavigate, theme, onCycleTheme, onOpenColorEditor }) => {
   const memories = useMemoryStore((s) => s.memories);
   const bucketItems = useBucketStore((s) => s.items);
   const prayerTopics = usePrayerStore((s) => s.topics);
 
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const greeting = useMemo(() => getGreeting(), []);
   const redecouverteLine = useMemo(
     () => REDECOUVERTE_LINES[Math.floor(Math.random() * REDECOUVERTE_LINES.length)],
@@ -70,7 +72,12 @@ export const HomePage: React.FC<HomeProps> = ({ onNavigate, theme, onCycleTheme 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 80, position: 'relative' }}>
       <button
         onClick={onCycleTheme}
-        title={`Thème : ${THEME_LABELS[theme]}`}
+        onTouchStart={() => (longPressTimer.current = setTimeout(onOpenColorEditor, 600))}
+        onTouchEnd={() => longPressTimer.current && clearTimeout(longPressTimer.current)}
+        onMouseDown={() => (longPressTimer.current = setTimeout(onOpenColorEditor, 600))}
+        onMouseUp={() => longPressTimer.current && clearTimeout(longPressTimer.current)}
+        onMouseLeave={() => longPressTimer.current && clearTimeout(longPressTimer.current)}
+        title={`Thème : ${THEME_LABELS[theme]} — appui long pour l'éditeur de couleurs`}
         style={{
           position: 'absolute',
           top: 0,

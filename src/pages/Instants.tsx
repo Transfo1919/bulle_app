@@ -185,7 +185,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
             {current && (
               <Card onClick={() => setActionMemory(current)} style={{ cursor: 'pointer', minHeight: 320, display: 'flex', flexDirection: 'column' }}>
                 {current.photo_url && (
-                  <img src={current.photo_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: T.radius - 6, marginBottom: 14 }} />
+                  <img src={current.photo_url} alt="" style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: T.radiusMd, marginBottom: 14 }} />
                 )}
                 <p style={{ fontSize: 12, color: T.muted, margin: '0 0 8px 0' }}>
                   {current.poetic || new Date(current.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -411,7 +411,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
                   key={c.id}
                   onClick={() => toggleMemoryCollection(collectionPickerFor, c.id)}
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: T.radius - 6,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: T.radiusMd,
                     border: `1px solid ${active ? T.sage : T.border}`, background: active ? `${CONTEXT.instants}22` : 'transparent',
                     cursor: 'pointer', fontFamily: T.font, fontSize: 14, color: T.ink,
                   }}
@@ -427,7 +427,7 @@ export const InstantsPage: React.FC<InstantsPageProps> = ({ onCreateClick, onEdi
                 placeholder="Nouvelle collection..."
                 value={newCollectionName}
                 onChange={(e) => setNewCollectionName(e.target.value)}
-                style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: T.radius - 6, padding: '10px 14px', fontFamily: T.font, fontSize: 14, outline: 'none', color: T.ink, background: T.surface }}
+                style={{ flex: 1, border: `1px solid ${T.border}`, borderRadius: T.radiusMd, padding: '10px 14px', fontFamily: T.font, fontSize: 14, outline: 'none', color: T.ink, background: T.surface }}
               />
               <Button size="sm" onClick={handleCreateCollection}>Créer</Button>
             </div>
