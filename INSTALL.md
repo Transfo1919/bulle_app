@@ -20,7 +20,7 @@ npm install
 3. Exécuter le script **`supabase_schema.sql`** (à la racine du repo) dans Supabase → SQL Editor.
    Il complète les tables existantes (`moments`, `bucket_items`, `prayer_topics`, `game_sessions`)
    et crée les tables manquantes (`collections`, `custom_questions`, `custom_defis`).
-4. Créer un bucket de stockage nommé **`photos`**, coché **Public**, dans Supabase → Storage.
+4. Créer un bucket de stockage nommé **`photo_moment`**, coché **Public**, dans Supabase → Storage.
 
 ### Variables d'environnement
 

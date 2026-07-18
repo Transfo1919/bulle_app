@@ -1,6 +1,49 @@
-// Compresse une photo côté client avant envoi : largeur max ~1920px,
-// format WebP, qualité 80-85 %. Réduit fortement le poids des photos
-// prises directement au téléphone, sans dégrader la qualité perçue.
+// Extrait la date de prise de vue et les coordonnées GPS depuis les
+// métadonnées EXIF d'une photo, quand elles existent (core.txt : "Les
+// données EXIF servent uniquement à pré-remplir les champs. Toutes
+// les informations restent modifiables.").
+export interface PhotoMetadata {
+  date?: string; // ISO
+  latitude?: number;
+  longitude?: number;
+}
+
+export async function extractPhotoMetadata(file: File): Promise<PhotoMetadata> {
+  try {
+    const exifr = await import('exifr');
+    const tags = await exifr.parse(file, { gps: true, pick: ['DateTimeOriginal', 'CreateDate', 'latitude', 'longitude'] });
+    if (!tags) return {};
+    const rawDate: Date | undefined = tags.DateTimeOriginal || tags.CreateDate;
+    return {
+      date: rawDate instanceof Date && !isNaN(rawDate.getTime()) ? rawDate.toISOString() : undefined,
+      latitude: typeof tags.latitude === 'number' ? tags.latitude : undefined,
+      longitude: typeof tags.longitude === 'number' ? tags.longitude : undefined,
+    };
+  } catch {
+    // Pas de métadonnées, ou format non lisible (ex: capture d'écran) : silencieux.
+    return {};
+  }
+}
+
+// Convertit des coordonnées GPS en nom de ville via OpenStreetMap
+// (Nominatim, gratuit, sans clé). Best-effort : renvoie undefined en
+// cas d'échec plutôt que de bloquer la création de l'instant.
+export async function reverseGeocodeCity(latitude: number, longitude: number): Promise<string | undefined> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`
+    );
+    if (!res.ok) return undefined;
+    const data = await res.json();
+    const addr = data?.address || {};
+    return addr.city || addr.town || addr.village || addr.municipality || addr.county || undefined;
+  } catch {
+    return undefined;
+  }
+}
+// format WebP, qualité 80-85 %. ⚠️ Le bucket Supabase "photo_moment"
+// doit autoriser le type MIME "image/webp" (Storage → bucket → Edit →
+// Allowed MIME types), sinon l'upload échouera.
 const MAX_WIDTH = 1920;
 const QUALITY = 0.82;
 

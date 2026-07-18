@@ -15,7 +15,7 @@ const PrayerPage = React.lazy(() => import('./pages/Prayer').then((m) => ({ defa
 import { Button, Modal, ErrorBanner, Spinner } from './components/UI';
 import { DEFAULT_GAMES } from './services/adeuxContent';
 import { uploadPhoto, isSupabaseConfigured } from './services/supabase';
-import { compressPhoto } from './services/photoService';
+import { compressPhoto, extractPhotoMetadata, reverseGeocodeCity } from './services/photoService';
 import { BucketItem, PrayerTopic, Memory } from './types';
 import { T, CONTEXT, SOURCE_COLORS, SOURCE_LABELS, ThemeName, THEME_ORDER, applyTheme, getStoredTheme } from './theme';
 
@@ -129,6 +129,8 @@ function AppContent() {
     setShowCreateMemory(true);
   };
 
+  const [locatingPhoto, setLocatingPhoto] = useState(false);
+
   const handlePhotoSelect = (file: File | null) => {
     setDraftPhotoFile(file);
     setRemovePhoto(file === null);
@@ -136,6 +138,19 @@ function AppContent() {
       const reader = new FileReader();
       reader.onload = () => setDraftPhotoPreview(reader.result as string);
       reader.readAsDataURL(file);
+
+      // Préremplissage depuis les métadonnées EXIF (date + lieu), sans
+      // bloquer l'UI ; l'utilisateur peut toujours corriger ensuite.
+      setLocatingPhoto(true);
+      extractPhotoMetadata(file)
+        .then(async (meta) => {
+          if (meta.date) setDraftDate(meta.date.slice(0, 10));
+          if (meta.latitude != null && meta.longitude != null) {
+            const city = await reverseGeocodeCity(meta.latitude, meta.longitude);
+            if (city) setDraftLocation(city);
+          }
+        })
+        .finally(() => setLocatingPhoto(false));
     } else {
       setDraftPhotoPreview(null);
     }
@@ -403,7 +418,7 @@ function AppContent() {
             />
             <input
               type="text"
-              placeholder="Lieu (optionnel)"
+              placeholder={locatingPhoto ? 'Détection du lieu...' : 'Lieu (optionnel)'}
               value={draftLocation}
               onChange={(e) => setDraftLocation(e.target.value)}
               list="known-locations"
